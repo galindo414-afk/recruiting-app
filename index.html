@@ -157,6 +157,7 @@
     <button id="nav-colleges" onclick="rpbNav('colleges')">Colleges</button>
     <button id="nav-tracker" onclick="rpbNav('tracker')">Tracker</button>
     <button id="nav-todo" onclick="rpbNav('todo')">To-do</button>
+    <button id="nav-resources" onclick="rpbNav('resources')">Resources</button>
   </div>
   <div id="rpb-content"></div>
 </div>
@@ -175,25 +176,397 @@
     }
   };
 
+  // --- Region and climate mappings by state (for filter UI) ---
+  const REGIONS = {
+    West: ['CA','OR','WA','NV','AZ','UT','ID','MT','WY','CO','NM','HI','AK'],
+    Southwest: ['TX','OK','NM','AZ'],
+    Midwest: ['IL','IN','IA','KS','MI','MN','MO','NE','ND','OH','SD','WI'],
+    South: ['AL','AR','FL','GA','KY','LA','MS','NC','SC','TN','VA','WV'],
+    Northeast: ['CT','ME','MA','NH','NJ','NY','PA','RI','VT','MD','DC','DE']
+  };
+  const CLIMATE_MAP = {
+    Warm: ['CA','AZ','FL','TX','NM','NV','HI','GA','LA','MS','AL','SC'],
+    Mild: ['OR','WA','UT','CO','NC','VA','TN','AR','OK','KY'],
+    Cold: ['IL','IN','IA','KS','MI','MN','MO','NE','ND','OH','SD','WI','CT','ME','MA','NH','NJ','NY','PA','RI','VT','MD','DC','DE','WV','ID','MT','WY','AK']
+  };
+  function getRegion(state) {
+    for (const [r, states] of Object.entries(REGIONS)) if (states.includes(state)) return r;
+    return '';
+  }
+  function getClimate(state) {
+    for (const [c, states] of Object.entries(CLIMATE_MAP)) if (states.includes(state)) return c;
+    return '';
+  }
+  function getGpaTier(gpa) {
+    if (gpa >= 3.7) return 'Elite (3.7+)';
+    if (gpa >= 3.3) return 'High (3.3-3.6)';
+    if (gpa >= 2.75) return 'Mid (2.75-3.2)';
+    return 'Open (2.0-2.7)';
+  }
+
   const DC = [
-    ['Orange Coast College','CA','JUCO',2.0,''],['Saddleback College','CA','JUCO',2.0,''],
-    ['Santa Barbara City College','CA','JUCO',2.0,''],['Riverside City College','CA','JUCO',2.0,''],
-    ['Palomar College','CA','JUCO',2.0,''],['Central Arizona College','AZ','JUCO',2.0,'D1 feeder'],
-    ['Scottsdale Community College','AZ','JUCO',2.0,''],['Chandler-Gilbert Community College','AZ','JUCO',2.0,''],
-    ['Mesa Community College','AZ','JUCO',2.0,''],['Otero College','CO','JUCO',2.0,'Local CO'],
-    ['Lamar Community College','CO','JUCO',2.0,''],['Trinidad State College','CO','JUCO',2.0,''],
-    ['Salt Lake Community College','UT','JUCO',2.0,''],['Snow College','UT','JUCO',2.0,''],
-    ['Arizona Christian University','AZ','NAIA',2.5,''],['Ottawa University Arizona','AZ','NAIA',2.5,''],
-    ['Embry-Riddle Aeronautical University','AZ','NAIA',3.0,'Strong academics'],
-    ["The Master's University",'CA','NAIA',2.5,''],['Hope International University','CA','NAIA',2.5,''],
-    ['Vanguard University','CA','NAIA',2.5,''],['Lewis-Clark State College','ID','NAIA',2.75,'Top NAIA'],
-    ['Whittier College','CA','D3',3.0,''],['University of La Verne','CA','D3',3.0,''],
-    ['California Lutheran University','CA','D3',3.0,''],['Occidental College','CA','D3',3.5,'High academic'],
-    ['Pomona-Pitzer','CA','D3',3.7,'Elite academic'],['Colorado College','CO','D3',3.5,'High academic'],
-    ['Willamette University','OR','D3',3.3,''],['Lewis & Clark College','OR','D3',3.3,''],
-    ['George Fox University','OR','D3',3.0,''],['Colorado Mesa University','CO','D2',2.75,''],
-    ['Colorado School of Mines','CO','D2',3.5,'Elite academic D2'],['Regis University','CO','D2',3.0,''],
-    ['Metropolitan State University of Denver','CO','D2',2.75,''],['University of Colorado Colorado Springs','CO','D2',2.75,'']
+    ['Allan Hancock College','CA','JUCO',2.0,'CCCAA — Santa Maria'],
+    ['American River College','CA','JUCO',2.0,'CCCAA — Sacramento'],
+    ['Bakersfield College','CA','JUCO',2.0,'CCCAA — Central Valley'],
+    ['Butte College','CA','JUCO',2.0,'CCCAA — Oroville'],
+    ['Cabrillo College','CA','JUCO',2.0,'CCCAA — Aptos'],
+    ['Canada College','CA','JUCO',2.0,'CCCAA — Redwood City'],
+    ['Cerritos College','CA','JUCO',2.0,'CCCAA — Norwalk'],
+    ['Chabot College','CA','JUCO',2.0,'CCCAA — Hayward'],
+    ['Citrus College','CA','JUCO',2.0,'CCCAA — Glendora'],
+    ['College of the Canyons','CA','JUCO',2.0,'CCCAA — Santa Clarita'],
+    ['College of the Desert','CA','JUCO',2.0,'CCCAA — Palm Desert'],
+    ['College of the Sequoias','CA','JUCO',2.0,'CCCAA — Visalia'],
+    ['College of the Siskiyous','CA','JUCO',2.0,'CCCAA — Weed'],
+    ['Contra Costa College','CA','JUCO',2.0,'CCCAA — San Pablo'],
+    ['Cosumnes River College','CA','JUCO',2.0,'CCCAA — Sacramento'],
+    ['Cuesta College','CA','JUCO',2.0,'CCCAA — San Luis Obispo'],
+    ['Cuyamaca College','CA','JUCO',2.0,'CCCAA — El Cajon'],
+    ['Cypress College','CA','JUCO',2.0,'CCCAA — Cypress'],
+    ['De Anza College','CA','JUCO',2.0,'CCCAA — Cupertino'],
+    ['Diablo Valley College','CA','JUCO',2.0,'CCCAA — Pleasant Hill'],
+    ['East Los Angeles College','CA','JUCO',2.0,'CCCAA — Monterey Park'],
+    ['El Camino College','CA','JUCO',2.0,'CCCAA — Torrance'],
+    ['Feather River College','CA','JUCO',2.0,'CCCAA — Quincy'],
+    ['Fresno City College','CA','JUCO',2.0,'CCCAA — strong program'],
+    ['Fullerton College','CA','JUCO',2.0,'CCCAA — strong tradition'],
+    ['Gavilan College','CA','JUCO',2.0,'CCCAA — Gilroy'],
+    ['Glendale Community College','CA','JUCO',2.0,'CCCAA'],
+    ['Golden West College','CA','JUCO',2.0,'CCCAA — Huntington Beach'],
+    ['Grossmont College','CA','JUCO',2.0,'CCCAA — El Cajon'],
+    ['Hartnell College','CA','JUCO',2.0,'CCCAA — Salinas'],
+    ['Imperial Valley College','CA','JUCO',2.0,'CCCAA — Imperial'],
+    ['Irvine Valley College','CA','JUCO',2.0,'CCCAA'],
+    ['Lassen College','CA','JUCO',2.0,'CCCAA — Susanville'],
+    ['Long Beach City College','CA','JUCO',2.0,'CCCAA — strong program'],
+    ['Los Angeles Harbor College','CA','JUCO',2.0,'CCCAA — Wilmington'],
+    ['Los Angeles Pierce College','CA','JUCO',2.0,'CCCAA — Woodland Hills'],
+    ['Los Angeles Valley College','CA','JUCO',2.0,'CCCAA — Valley Glen'],
+    ['Los Medanos College','CA','JUCO',2.0,'CCCAA — Pittsburg'],
+    ['Marin College','CA','JUCO',2.0,'CCCAA — Kentfield'],
+    ['Mendocino College','CA','JUCO',2.0,'CCCAA — Ukiah'],
+    ['Merced College','CA','JUCO',2.0,'CCCAA'],
+    ['Mira Costa College','CA','JUCO',2.0,'CCCAA — Oceanside'],
+    ['Mission College','CA','JUCO',2.0,'CCCAA — Santa Clara'],
+    ['Modesto Junior College','CA','JUCO',2.0,'CCCAA'],
+    ['Monterey Peninsula College','CA','JUCO',2.0,'CCCAA'],
+    ['Moorpark College','CA','JUCO',2.0,'CCCAA'],
+    ['Mt. San Antonio College','CA','JUCO',2.0,'CCCAA — Walnut'],
+    ['Mt. San Jacinto College','CA','JUCO',2.0,'CCCAA'],
+    ['Napa Valley College','CA','JUCO',2.0,'CCCAA'],
+    ['Ohlone College','CA','JUCO',2.0,'CCCAA — Fremont'],
+    ['Orange Coast College','CA','JUCO',2.0,'CCCAA — strong dev program'],
+    ['Oxnard College','CA','JUCO',2.0,'CCCAA'],
+    ['Palomar College','CA','JUCO',2.0,'CCCAA — San Marcos'],
+    ['Pasadena City College','CA','JUCO',2.0,'CCCAA'],
+    ['Porterville College','CA','JUCO',2.0,'CCCAA'],
+    ['Reedley College','CA','JUCO',2.0,'CCCAA'],
+    ['Rio Hondo College','CA','JUCO',2.0,'CCCAA — Whittier'],
+    ['Riverside City College','CA','JUCO',2.0,'CCCAA — strong program'],
+    ['Sacramento City College','CA','JUCO',2.0,'CCCAA'],
+    ['Saddleback College','CA','JUCO',2.0,'CCCAA — Mission Viejo'],
+    ['San Bernardino Valley College','CA','JUCO',2.0,'CCCAA'],
+    ['San Diego City College','CA','JUCO',2.0,'CCCAA'],
+    ['San Diego Mesa College','CA','JUCO',2.0,'CCCAA'],
+    ['San Diego Miramar College','CA','JUCO',2.0,'CCCAA'],
+    ['San Joaquin Delta College','CA','JUCO',2.0,'CCCAA — Stockton'],
+    ['San Mateo College','CA','JUCO',2.0,'CCCAA'],
+    ['Santa Ana College','CA','JUCO',2.0,'CCCAA'],
+    ['Santa Barbara City College','CA','JUCO',2.0,'CCCAA'],
+    ['Santa Monica College','CA','JUCO',2.0,'CCCAA'],
+    ['Santa Rosa Junior College','CA','JUCO',2.0,'CCCAA'],
+    ['Santiago Canyon College','CA','JUCO',2.0,'CCCAA — Orange'],
+    ['Shasta College','CA','JUCO',2.0,'CCCAA — Redding'],
+    ['Sierra College','CA','JUCO',2.0,'CCCAA — Rocklin'],
+    ['Skyline College','CA','JUCO',2.0,'CCCAA — San Bruno'],
+    ['Solano Community College','CA','JUCO',2.0,'CCCAA — Fairfield'],
+    ['Southwestern College','CA','JUCO',2.0,'CCCAA — Chula Vista'],
+    ['Taft College','CA','JUCO',2.0,'CCCAA'],
+    ['Ventura College','CA','JUCO',2.0,'CCCAA'],
+    ['West Hills College Coalinga','CA','JUCO',2.0,'CCCAA'],
+    ['West Hills College Lemoore','CA','JUCO',2.0,'CCCAA'],
+    ['West Los Angeles College','CA','JUCO',2.0,'CCCAA'],
+    ['West Valley College','CA','JUCO',2.0,'CCCAA — Saratoga'],
+    ['Yuba College','CA','JUCO',2.0,'CCCAA — Marysville'],
+    ['Arizona Western College','AZ','JUCO',2.0,'NJCAA D1 — Yuma'],
+    ['Central Arizona College','AZ','JUCO',2.0,'NJCAA D1 — Coolidge, top D1 feeder'],
+    ['Chandler-Gilbert Community College','AZ','JUCO',2.0,'NJCAA D1'],
+    ['Cochise College','AZ','JUCO',2.0,'NJCAA D1 — Douglas'],
+    ['Eastern Arizona College','AZ','JUCO',2.0,'NJCAA D1 — Thatcher'],
+    ['Gateway Community College','AZ','JUCO',2.0,'NJCAA D2 — Phoenix'],
+    ['Glendale Community College (AZ)','AZ','JUCO',2.0,'NJCAA D1'],
+    ['Mesa Community College','AZ','JUCO',2.0,'NJCAA D1'],
+    ['Paradise Valley Community College','AZ','JUCO',2.0,'NJCAA D2 — Phoenix'],
+    ['Phoenix College','AZ','JUCO',2.0,'NJCAA D1'],
+    ['Pima Community College','AZ','JUCO',2.0,'NJCAA D1 — Tucson'],
+    ['Scottsdale Community College','AZ','JUCO',2.0,'NJCAA D1'],
+    ['South Mountain Community College','AZ','JUCO',2.0,'NJCAA D2 — Phoenix'],
+    ['Yavapai College','AZ','JUCO',2.0,'NJCAA D1 — Prescott, historically strong'],
+    ['Lamar Community College','CO','JUCO',2.0,'NJCAA D1'],
+    ['Otero College','CO','JUCO',2.0,'NJCAA D1 — La Junta'],
+    ['Trinidad State College','CO','JUCO',2.0,'NJCAA D1'],
+    ['Northeastern Junior College','CO','JUCO',2.0,'NJCAA D1 — Sterling'],
+    ['Colorado Northwestern Community College','CO','JUCO',2.0,'NJCAA D1 — Rangely'],
+    ['Salt Lake Community College','UT','JUCO',2.0,'NJCAA D1'],
+    ['Snow College','UT','JUCO',2.0,'NJCAA D1 — Ephraim'],
+    ['College of Southern Nevada','NV','JUCO',2.0,'NJCAA D1 — Henderson'],
+    ['Bellevue College','WA','JUCO',2.0,'NWAC'],
+    ['Centralia College','WA','JUCO',2.0,'NWAC'],
+    ['Chemeketa CC','OR','JUCO',2.0,'NWAC — Salem'],
+    ['Clackamas CC','OR','JUCO',2.0,'NWAC — Oregon City'],
+    ['Douglas CC','OR','JUCO',2.0,'NWAC — Roseburg'],
+    ['Edmonds CC','WA','JUCO',2.0,'NWAC'],
+    ['Everett CC','WA','JUCO',2.0,'NWAC'],
+    ['Lane CC','OR','JUCO',2.0,'NWAC — Eugene'],
+    ['Linn-Benton CC','OR','JUCO',2.0,'NWAC — Albany'],
+    ['Lower Columbia College','WA','JUCO',2.0,'NWAC — Longview'],
+    ['Mt. Hood CC','OR','JUCO',2.0,'NWAC — Gresham'],
+    ['Olympic College','WA','JUCO',2.0,'NWAC — Bremerton'],
+    ['Pierce College','WA','JUCO',2.0,'NWAC — Lakewood'],
+    ['Skagit Valley College','WA','JUCO',2.0,'NWAC — Mt. Vernon'],
+    ['South Puget Sound CC','WA','JUCO',2.0,'NWAC — Olympia'],
+    ['Spokane CC','WA','JUCO',2.0,'NWAC'],
+    ['Tacoma CC','WA','JUCO',2.0,'NWAC'],
+    ['Treasure Valley CC','OR','JUCO',2.0,'NWAC — Ontario'],
+    ['Umpqua CC','OR','JUCO',2.0,'NWAC — Roseburg'],
+    ['Wenatchee Valley College','WA','JUCO',2.0,'NWAC'],
+    ['Yakima Valley College','WA','JUCO',2.0,'NWAC'],
+    ['Alvin Community College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Angelina College','TX','JUCO',2.0,'NJCAA D1 — Lufkin'],
+    ['Blinn College','TX','JUCO',2.0,'NJCAA D1 — Brenham, strong'],
+    ['Cisco College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Collin College','TX','JUCO',2.0,'NJCAA D1 — Plano'],
+    ['Dallas College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Galveston College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Grayson College','TX','JUCO',2.0,'NJCAA D1 — Denison, historically elite'],
+    ['Hill College','TX','JUCO',2.0,'NJCAA D1 — Hillsboro'],
+    ['Howard College','TX','JUCO',2.0,'NJCAA D1 — Big Spring'],
+    ['Laredo College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Lee College','TX','JUCO',2.0,'NJCAA D1 — Baytown'],
+    ['McLennan CC','TX','JUCO',2.0,'NJCAA D1 — Waco, strong'],
+    ['Midland College','TX','JUCO',2.0,'NJCAA D1 — historically elite'],
+    ['Navarro College','TX','JUCO',2.0,'NJCAA D1 — Corsicana'],
+    ['North Central Texas College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Odessa College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Paris Junior College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Ranger College','TX','JUCO',2.0,'NJCAA D1'],
+    ['San Jacinto College','TX','JUCO',2.0,'NJCAA D1 — Houston, historically elite'],
+    ['South Plains College','TX','JUCO',2.0,'NJCAA D1 — Levelland'],
+    ['Temple College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Texarkana College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Trinity Valley Community College','TX','JUCO',2.0,'NJCAA D1 — Athens'],
+    ['Tyler Junior College','TX','JUCO',2.0,'NJCAA D1 — strong'],
+    ['Vernon College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Weatherford College','TX','JUCO',2.0,'NJCAA D1'],
+    ['Western Texas College','TX','JUCO',2.0,'NJCAA D1 — Snyder'],
+    ['Connors State','OK','JUCO',2.0,'NJCAA D1 — Warner'],
+    ['Eastern Oklahoma State','OK','JUCO',2.0,'NJCAA D1 — Wilburton'],
+    ['Murray State College','OK','JUCO',2.0,'NJCAA D1 — Tishomingo'],
+    ['Northeastern Oklahoma A&M','OK','JUCO',2.0,'NJCAA D1 — Miami'],
+    ['Northern Oklahoma College','OK','JUCO',2.0,'NJCAA D1'],
+    ['Oklahoma City Community College','OK','JUCO',2.0,'NJCAA D2'],
+    ['Rose State College','OK','JUCO',2.0,'NJCAA D1 — Midwest City'],
+    ['Seminole State College','OK','JUCO',2.0,'NJCAA D1'],
+    ['Western Oklahoma State','OK','JUCO',2.0,'NJCAA D1 — Altus'],
+    ['New Mexico Junior College','NM','JUCO',2.0,'NJCAA D1 — Hobbs'],
+    ['New Mexico Military Institute','NM','JUCO',2.0,'NJCAA D1 — Roswell'],
+    ['Chipola College','FL','JUCO',2.0,'NJCAA D1 — Marianna, historically elite'],
+    ['College of Central Florida','FL','JUCO',2.0,'NJCAA D1 — Ocala'],
+    ['Daytona State College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Eastern Florida State College','FL','JUCO',2.0,'NJCAA D1 — Melbourne'],
+    ['Florida SouthWestern State','FL','JUCO',2.0,'NJCAA D1 — Fort Myers'],
+    ['Gulf Coast State College','FL','JUCO',2.0,'NJCAA D1 — Panama City'],
+    ['Hillsborough CC','FL','JUCO',2.0,'NJCAA D1 — Tampa'],
+    ['Indian River State College','FL','JUCO',2.0,'NJCAA D1 — Fort Pierce'],
+    ['Lake-Sumter State College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Miami Dade College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Northwest Florida State','FL','JUCO',2.0,'NJCAA D1 — Niceville, historically elite'],
+    ['Palm Beach State College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Pasco-Hernando State College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Pensacola State College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Polk State College','FL','JUCO',2.0,'NJCAA D1 — Winter Haven'],
+    ['Santa Fe College','FL','JUCO',2.0,'NJCAA D1 — Gainesville'],
+    ['South Florida State College','FL','JUCO',2.0,'NJCAA D1 — Avon Park'],
+    ['St. Johns River State College','FL','JUCO',2.0,'NJCAA D1'],
+    ['St. Petersburg College','FL','JUCO',2.0,'NJCAA D1'],
+    ['State College of Florida','FL','JUCO',2.0,'NJCAA D1 — Bradenton'],
+    ['Tallahassee Community College','FL','JUCO',2.0,'NJCAA D1'],
+    ['Andrew College','GA','JUCO',2.0,'NJCAA D1 — Cuthbert'],
+    ['Chattahoochee Valley CC','AL','JUCO',2.0,'NJCAA D1 — Phenix City'],
+    ['East Georgia State College','GA','JUCO',2.0,'NJCAA D1'],
+    ['Gordon State College','GA','JUCO',2.0,'NJCAA D1 — Barnesville'],
+    ['Snead State CC','AL','JUCO',2.0,'NJCAA D1 — Boaz'],
+    ['Southern Union State CC','AL','JUCO',2.0,'NJCAA D1 — Wadley'],
+    ['Wallace Community College Dothan','AL','JUCO',2.0,'NJCAA D1'],
+    ['Wallace Community College Selma','AL','JUCO',2.0,'NJCAA D1'],
+    ['East Central CC','MS','JUCO',2.0,'NJCAA D1'],
+    ['East Mississippi CC','MS','JUCO',2.0,'NJCAA D1'],
+    ['Hinds CC','MS','JUCO',2.0,'NJCAA D1'],
+    ['Holmes CC','MS','JUCO',2.0,'NJCAA D1 — Goodman'],
+    ['Itawamba CC','MS','JUCO',2.0,'NJCAA D1 — Fulton'],
+    ['Jones College','MS','JUCO',2.0,'NJCAA D1 — Ellisville'],
+    ['Meridian CC','MS','JUCO',2.0,'NJCAA D1'],
+    ['Mississippi Delta CC','MS','JUCO',2.0,'NJCAA D1 — Moorhead'],
+    ['Mississippi Gulf Coast CC','MS','JUCO',2.0,'NJCAA D1 — Perkinston'],
+    ['Northeast Mississippi CC','MS','JUCO',2.0,'NJCAA D1 — Booneville'],
+    ['Northwest Mississippi CC','MS','JUCO',2.0,'NJCAA D1 — Senatobia'],
+    ['Pearl River CC','MS','JUCO',2.0,'NJCAA D1 — Poplarville'],
+    ['Southwest Mississippi CC','MS','JUCO',2.0,'NJCAA D1 — Summit'],
+    ['Arizona Christian','AZ','NAIA',2.75,'GSAC — Glendale'],
+    ['Embry-Riddle Prescott','AZ','NAIA',3.0,'CalPac — strong academic'],
+    ['Ottawa University Arizona','AZ','NAIA',2.75,'GSAC — Surprise'],
+    ['Park University Gilbert','AZ','NAIA',2.5,'CalPac'],
+    ['Antelope Valley','CA','NAIA',2.5,'CalPac — Lancaster'],
+    ['Bethesda University','CA','NAIA',2.5,'CalPac — Anaheim'],
+    ['Hope International','CA','NAIA',2.5,'GSAC — Fullerton'],
+    ['La Sierra','CA','NAIA',2.75,'CalPac — Riverside'],
+    ['Providence Christian','CA','NAIA',2.5,'CalPac — Pasadena'],
+    ['San Diego Christian','CA','NAIA',2.5,'GSAC'],
+    ['Simpson University','CA','NAIA',2.5,'CalPac — Redding'],
+    ['Soka University','CA','NAIA',3.3,'CalPac — Aliso Viejo, strong academic'],
+    ['The Master\'s University','CA','NAIA',2.75,'GSAC'],
+    ['UC Merced','CA','NAIA',2.75,'CalPac'],
+    ['University of Antelope Valley','CA','NAIA',2.5,'CalPac — Lancaster'],
+    ['Westcliff','CA','NAIA',2.5,'GSAC — Irvine'],
+    ['William Jessup','CA','NAIA',2.75,'CalPac — Rocklin'],
+    ['College of Idaho','ID','NAIA',2.75,'Cascade — Caldwell'],
+    ['Corban','OR','NAIA',2.75,'Cascade — Salem'],
+    ['Eastern Oregon','OR','NAIA',2.5,'Cascade — La Grande'],
+    ['Lewis-Clark State','ID','NAIA',2.75,'Frontier — top NAIA, multi-time champs'],
+    ['Multnomah','OR','NAIA',2.5,'Cascade — Portland'],
+    ['Northwest Christian (Bushnell)','OR','NAIA',2.5,'Cascade — Eugene'],
+    ['Northwest University','WA','NAIA',2.5,'Cascade — Kirkland'],
+    ['Oregon Tech','OR','NAIA',3.0,'Cascade — Klamath Falls'],
+    ['Southern Oregon','OR','NAIA',2.75,'Cascade — Ashland, competitive'],
+    ['Warner Pacific','OR','NAIA',2.5,'Cascade — Portland'],
+    ['Carroll College','MT','NAIA',3.0,'Frontier — Helena'],
+    ['LSU Alexandria','LA','NAIA',2.5,'Red River'],
+    ['Louisiana Christian','LA','NAIA',2.75,'Red River'],
+    ['Our Lady of the Lake','TX','NAIA',2.5,'Red River — San Antonio'],
+    ['Texas A&M–Texarkana','TX','NAIA',2.5,'Red River (transitioning D2)'],
+    ['Texas Wesleyan','TX','NAIA',3.0,'SAC — Fort Worth, historically strong'],
+    ['University of the Southwest','NM','NAIA',2.5,'Red River — Hobbs'],
+    ['Wayland Baptist','TX','NAIA',2.75,'SAC — Plainview'],
+    ['Ave Maria','FL','NAIA',2.75,'Sun — private Catholic'],
+    ['Florida Memorial','FL','NAIA',2.5,'Sun — Miami Gardens'],
+    ['Keiser','FL','NAIA',2.75,'Sun — West Palm, top-5 national'],
+    ['Southeastern (FL)','FL','NAIA',2.75,'Sun — Lakeland, recent finalist'],
+    ['St. Thomas (FL)','FL','NAIA',2.75,'Sun — Miami Gardens'],
+    ['Warner University','FL','NAIA',2.5,'Sun — Lake Wales'],
+    ['Webber International','FL','NAIA',2.5,'Sun — Babson Park'],
+    ['Brewton-Parker','GA','NAIA',2.5,'SSAC — Mount Vernon'],
+    ['Faulkner','AL','NAIA',2.75,'SSAC — Montgomery'],
+    ['Reinhardt','GA','NAIA',2.75,'AAC — Waleska'],
+    ['Talladega College','AL','NAIA',2.5,'SSAC'],
+    ['Tennessee Wesleyan','TN','NAIA',2.75,'AAC — 2024 champ, recent powerhouse'],
+    ['Truett McConnell','GA','NAIA',2.5,'AAC'],
+    ['William Carey','MS','NAIA',2.75,'SSAC — Hattiesburg'],
+    ['LSU Shreveport','LA','NAIA',2.75,'RRAC — 2025 undefeated champs (59-0)'],
+    ['MidAmerica Nazarene','KS','NAIA',2.75,'Heart Conf — 2026 top-5'],
+    ['Oklahoma Wesleyan','OK','NAIA',2.75,'KCAC — 2026 preseason #1'],
+    ['Cumberlands','KY','NAIA',2.75,'Mid-South — multi-WS appearances'],
+    ['Georgia Gwinnett','GA','NAIA',2.75,'AAC — top NAIA'],
+    ['Taylor','IN','NAIA',3.0,'Crossroads — strong program'],
+    ['Indiana Wesleyan','IN','NAIA',3.0,'Crossroads'],
+    ['California Lutheran','CA','D3',3.0,'SCIAC — Thousand Oaks'],
+    ['Chapman','CA','D3',3.5,'SCIAC — Orange, strong academic'],
+    ['Claremont Mudd Scripps','CA','D3',3.7,'SCIAC — elite academic'],
+    ['La Verne','CA','D3',3.0,'SCIAC'],
+    ['Occidental','CA','D3',3.5,'SCIAC — LA, strong academic'],
+    ['Pomona-Pitzer','CA','D3',3.7,'SCIAC — elite academic'],
+    ['Redlands','CA','D3',3.3,'SCIAC'],
+    ['Whittier','CA','D3',3.0,'SCIAC'],
+    ['Austin College','TX','D3',3.3,'SCAC — Sherman, strong academic'],
+    ['Concordia Texas','TX','D3',3.0,'ASC — Austin'],
+    ['Dallas','TX','D3',3.0,'SCAC'],
+    ['East Texas Baptist','TX','D3',2.75,'ASC — Marshall'],
+    ['Hardin-Simmons','TX','D3',2.75,'ASC — Abilene'],
+    ['LeTourneau','TX','D3',3.0,'ASC — Longview'],
+    ['McMurry','TX','D3',2.75,'ASC — Abilene'],
+    ['Mary Hardin-Baylor','TX','D3',2.75,'ASC — Belton, strong recent program'],
+    ['Schreiner','TX','D3',2.75,'SCAC'],
+    ['Southwestern (TX)','TX','D3',3.3,'SCAC — Georgetown'],
+    ['Texas Lutheran','TX','D3',2.75,'SCAC — Seguin'],
+    ['Trinity (TX)','TX','D3',3.7,'SCAC — San Antonio, elite academic'],
+    ['Colorado College','CO','D3',3.5,'SCAC — high academic'],
+    ['George Fox','OR','D3',3.0,'NWC — Newberg, private Christian'],
+    ['Lewis & Clark','OR','D3',3.3,'NWC — Portland'],
+    ['Linfield','OR','D3',3.0,'NWC — McMinnville, historically strong'],
+    ['Pacific (OR)','OR','D3',3.0,'NWC — Forest Grove'],
+    ['Pacific Lutheran','WA','D3',3.0,'NWC — Tacoma'],
+    ['Puget Sound','WA','D3',3.3,'NWC — Tacoma, strong academic'],
+    ['Whitman','WA','D3',3.5,'NWC — Walla Walla, elite academic'],
+    ['Whitworth','WA','D3',3.0,'NWC — Spokane'],
+    ['Willamette','OR','D3',3.3,'NWC — Salem, strong academic'],
+    ['Huntingdon','AL','D3',2.75,'CCS — Montgomery'],
+    ['Emory','GA','D3',3.7,'UAA — elite academic'],
+    ['LaGrange','GA','D3',2.75,'CCS — private'],
+    ['Oglethorpe','GA','D3',3.0,'CCS — Atlanta'],
+    ['Piedmont (GA)','GA','D3',3.0,'CCS — Demorest'],
+    ['Amherst','MA','D3',3.8,'NESCAC — elite academic'],
+    ['Bowdoin','ME','D3',3.7,'NESCAC — elite academic'],
+    ['Case Western Reserve','OH','D3',3.5,'UAA — strong academic'],
+    ['Carnegie Mellon','PA','D3',3.7,'UAA — elite academic'],
+    ['Johns Hopkins','MD','D3',3.8,'CC — elite academic'],
+    ['MIT','MA','D3',3.9,'NEWMAC — elite academic'],
+    ['Middlebury','VT','D3',3.7,'NESCAC — elite academic'],
+    ['Swarthmore','PA','D3',3.8,'CC — elite academic'],
+    ['Tufts','MA','D3',3.7,'NESCAC — elite academic'],
+    ['Washington University (STL)','MO','D3',3.7,'UAA — elite academic'],
+    ['Williams','MA','D3',3.8,'NESCAC — elite academic'],
+    ['Adams State','CO','D2',2.75,'RMAC — Alamosa'],
+    ['Angelo State','TX','D2',2.75,'Lone Star Conf'],
+    ['Azusa Pacific','CA','D2',3.0,'PacWest — private'],
+    ['Barry','FL','D2',2.75,'SSC — Miami'],
+    ['Biola','CA','D2',3.0,'PacWest — private Christian'],
+    ['Cal Poly Pomona','CA','D2',3.0,'CCAA'],
+    ['Cal State Dominguez Hills','CA','D2',2.75,'CCAA — Carson'],
+    ['Cal State East Bay','CA','D2',2.75,'CCAA — Hayward'],
+    ['Cal State Los Angeles','CA','D2',2.75,'CCAA'],
+    ['Cal State Monterey Bay','CA','D2',2.75,'CCAA'],
+    ['Cal State San Bernardino','CA','D2',2.75,'CCAA'],
+    ['Cal State San Marcos','CA','D2',2.75,'CCAA'],
+    ['Cal State Stanislaus','CA','D2',2.75,'CCAA — Turlock'],
+    ['Chico State','CA','D2',2.75,'CCAA — Nettleton Stadium'],
+    ['Colorado Christian','CO','D2',3.0,'RMAC — Lakewood, private Christian'],
+    ['Colorado Mesa','CO','D2',2.75,'RMAC — Grand Junction, strong program'],
+    ['Colorado Mines','CO','D2',3.5,'RMAC — elite academic D2'],
+    ['Concordia–Irvine','CA','D2',3.0,'PacWest'],
+    ['CSU Pueblo','CO','D2',2.75,'RMAC'],
+    ['Eastern New Mexico','NM','D2',2.75,'Lone Star Conf'],
+    ['Eckerd','FL','D2',3.2,'SSC — St. Petersburg, strong academic'],
+    ['Embry-Riddle','FL','D2',3.0,'SSC — Daytona (D2 campus)'],
+    ['Flagler','FL','D2',3.0,'Peach Belt — St. Augustine'],
+    ['Florida Southern','FL','D2',3.0,'SSC — Lakeland, historically elite'],
+    ['Florida Tech','FL','D2',3.0,'SSC — Melbourne'],
+    ['Fresno Pacific','CA','D2',2.75,'PacWest'],
+    ['Hawaiʻi Hilo','HI','D2',2.75,'PacWest'],
+    ['Hawaiʻi Pacific','HI','D2',2.75,'PacWest'],
+    ['Lubbock Christian','TX','D2',3.0,'Lone Star — private'],
+    ['Lynn','FL','D2',2.75,'SSC — Boca Raton'],
+    ['Metropolitan State (Denver)','CO','D2',2.75,'RMAC'],
+    ['Menlo','CA','D2',3.0,'PacWest — Atherton, private'],
+    ['New Mexico Highlands','NM','D2',2.5,'RMAC'],
+    ['Nova Southeastern','FL','D2',3.0,'SSC — Davie'],
+    ['Oklahoma Christian','OK','D2',3.0,'Lone Star — private'],
+    ['Palm Beach Atlantic','FL','D2',3.0,'SSC — private Christian'],
+    ['Point Loma Nazarene','CA','D2',3.0,'PacWest — San Diego'],
+    ['Regis','CO','D2',3.0,'RMAC — Denver, private'],
+    ['Rollins','FL','D2',3.3,'SSC — Winter Park, strong academic'],
+    ['Saint Edward\'s','TX','D2',3.0,'Lone Star — Austin, private'],
+    ['Saint Leo','FL','D2',2.75,'SSC'],
+    ['Saint Mary\'s (TX)','TX','D2',2.75,'Lone Star — San Antonio'],
+    ['San Francisco State','CA','D2',2.75,'CCAA'],
+    ['Sul Ross State','TX','D2',2.5,'Lone Star — Alpine'],
+    ['Tampa','FL','D2',3.2,'SSC — historically elite, 10 titles'],
+    ['Texas A&M–Kingsville','TX','D2',2.5,'Lone Star'],
+    ['UCCS','CO','D2',2.75,'RMAC — Colorado Springs'],
+    ['UT Permian Basin','TX','D2',2.5,'Lone Star — Odessa'],
+    ['UT Tyler','TX','D2',2.75,'Lone Star'],
+    ['Vanguard','CA','D2',3.0,'PacWest — Costa Mesa'],
+    ['West Florida','FL','D2',2.75,'Gulf South — Pensacola'],
+    ['West Texas A&M','TX','D2',2.75,'Lone Star — Canyon'],
+    ['Westmont','CA','D2',3.3,'PacWest — Santa Barbara, strong academic']
   ].map((c,i) => ({id:'c'+(i+1), name:c[0], state:c[1], division:c[2], gpaMin:c[3], notes:c[4]}));
 
   const TT = {
@@ -247,7 +620,7 @@
   let state = {
     view: 'players', activePlayerId: null,
     players: {}, colleges: DC, contacts: {}, todos: {}, games: {},
-    collegeFilter: { division:'', state:'', search:'' },
+    collegeFilter: { division:'', state:'', search:'', region:'', climate:'', gpaTier:'' },
     gameForm: null
   };
 
@@ -436,6 +809,10 @@
   };
 
   window.rpbFilter = function(f, v) { state.collegeFilter[f] = v; render(); };
+  window.rpbClearFilters = function() {
+    state.collegeFilter = { division:'', state:'', search:'', region:'', climate:'', gpaTier:'' };
+    render();
+  };
 
   window.rpbAddCollege = function() {
     const n = prompt('College name:'); if (!n) return;
@@ -744,20 +1121,60 @@
 
     if (state.view === 'colleges') {
       const f = state.collegeFilter;
-      const fl = state.colleges.filter(cc => (!f.division||cc.division===f.division) && (!f.state||cc.state===f.state) && (!f.search||cc.name.toLowerCase().includes(f.search.toLowerCase())));
-      const sts = [...new Set(state.colleges.map(cc=>cc.state))].sort();
-      let h = `<div class="rpb-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h2 style="margin:0;font-size:17px;font-weight:500;">College database</h2><button onclick="rpbAddCollege()">+ Add</button></div>
-        <div class="rpb-filter-row">
-          <select onchange="rpbFilter('division',this.value)"><option value="">All divisions</option>${['JUCO','NAIA','D1','D2','D3'].map(d=>`<option ${f.division===d?'selected':''}>${d}</option>`).join('')}</select>
-          <select onchange="rpbFilter('state',this.value)"><option value="">All states</option>${sts.map(ss=>`<option ${f.state===ss?'selected':''}>${ss}</option>`).join('')}</select>
-          <input placeholder="Search..." value="${f.search}" oninput="rpbFilter('search',this.value)">
-        </div>
-        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px;">${fl.length} school${fl.length===1?'':'s'}</div>`;
-      fl.forEach(cc => {
-        const tr = state.activePlayerId && state.contacts[state.activePlayerId+'_'+cc.id];
-        h += `<div class="rpb-row"><div><div style="font-weight:500;">${cc.name}</div><div style="font-size:13px;color:var(--color-text-secondary);margin-top:2px;"><span class="rpb-badge ${cc.division.toLowerCase()}">${cc.division}</span>${cc.state} · Min GPA ${cc.gpaMin}${cc.notes?' · '+cc.notes:''}</div></div><div>${tr?'<span style="font-size:12px;color:var(--color-text-success);">Tracked</span>':`<button onclick="rpbTrack('${cc.id}')">+ Track</button>`}</div></div>`;
+      const fl = state.colleges.filter(cc => {
+        if (f.division && cc.division !== f.division) return false;
+        if (f.state && cc.state !== f.state) return false;
+        if (f.region && getRegion(cc.state) !== f.region) return false;
+        if (f.climate && getClimate(cc.state) !== f.climate) return false;
+        if (f.gpaTier && getGpaTier(cc.gpaMin) !== f.gpaTier) return false;
+        if (f.search && !cc.name.toLowerCase().includes(f.search.toLowerCase()) && !cc.notes.toLowerCase().includes(f.search.toLowerCase())) return false;
+        return true;
       });
+      const sts = [...new Set(state.colleges.map(cc=>cc.state))].sort();
+      const anyFilterActive = f.division || f.state || f.region || f.climate || f.gpaTier || f.search;
+
+      let h = `<div class="rpb-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px;"><h2 style="margin:0;font-size:17px;font-weight:500;">College database</h2><div class="rpb-inline-btns">${anyFilterActive?`<button onclick="rpbClearFilters()">Clear filters</button>`:''}<button onclick="rpbAddCollege()">+ Add college</button></div></div>
+
+        <div style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Filters</div>
+        <div class="rpb-filter-row">
+          <select onchange="rpbFilter('division',this.value)" title="Division">
+            <option value="">All divisions</option>
+            ${['JUCO','NAIA','D1','D2','D3'].map(d=>`<option ${f.division===d?'selected':''}>${d}</option>`).join('')}
+          </select>
+          <select onchange="rpbFilter('region',this.value)" title="Region">
+            <option value="">All regions</option>
+            ${Object.keys(REGIONS).map(r=>`<option ${f.region===r?'selected':''}>${r}</option>`).join('')}
+          </select>
+          <select onchange="rpbFilter('climate',this.value)" title="Climate">
+            <option value="">Any climate</option>
+            ${Object.keys(CLIMATE_MAP).map(cl=>`<option ${f.climate===cl?'selected':''}>${cl}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rpb-filter-row">
+          <select onchange="rpbFilter('state',this.value)" title="State">
+            <option value="">All states</option>
+            ${sts.map(ss=>`<option ${f.state===ss?'selected':''}>${ss}</option>`).join('')}
+          </select>
+          <select onchange="rpbFilter('gpaTier',this.value)" title="GPA requirement tier">
+            <option value="">Any GPA tier</option>
+            ${['Open (2.0-2.7)','Mid (2.75-3.2)','High (3.3-3.6)','Elite (3.7+)'].map(g=>`<option ${f.gpaTier===g?'selected':''}>${g}</option>`).join('')}
+          </select>
+          <input placeholder="Search name or notes..." value="${f.search}" oninput="rpbFilter('search',this.value)">
+        </div>
+
+        <div style="font-size:13px;color:var(--color-text-secondary);margin:12px 0 8px;">${fl.length} school${fl.length===1?'':'s'}${anyFilterActive?` match filters (of ${state.colleges.length} total)`:''}</div>`;
+
+      if (fl.length === 0) {
+        h += `<div class="rpb-empty">No schools match. Try clearing filters or use "+ Add college" to add one not in the list.</div>`;
+      } else {
+        fl.forEach(cc => {
+          const tr = state.activePlayerId && state.contacts[state.activePlayerId+'_'+cc.id];
+          const region = getRegion(cc.state);
+          const climate = getClimate(cc.state);
+          h += `<div class="rpb-row"><div style="flex:1;min-width:0;"><div style="font-weight:500;">${cc.name}</div><div style="font-size:13px;color:var(--color-text-secondary);margin-top:2px;"><span class="rpb-badge ${cc.division.toLowerCase()}">${cc.division}</span>${cc.state}${region?' · '+region:''}${climate?' · '+climate:''} · Min GPA ${cc.gpaMin}${cc.notes?' · '+cc.notes:''}</div></div><div>${tr?'<span style="font-size:12px;color:var(--color-text-success);">Tracked</span>':`<button onclick="rpbTrack('${cc.id}')">+ Track</button>`}</div></div>`;
+        });
+      }
       h += '</div>';
       c.innerHTML = h; return;
     }
@@ -825,6 +1242,100 @@
         });
         h += '</div>';
       });
+      c.innerHTML = h; return;
+    }
+
+    if (state.view === 'resources') {
+      let h = `<div class="rpb-card">
+        <h2 style="margin:0 0 1rem;font-size:17px;font-weight:500;">Recruiting resources & cheat sheet</h2>
+        <p style="font-size:14px;color:var(--color-text-secondary);margin:0 0 1rem;">The app has 362 schools pre-loaded focused on JUCO/NAIA/D3/warm-state D2 — the realistic tiers for a developing LHP. For anything not in the list, use these external sites to find programs, then click "+ Add college" on the Colleges tab.</p>
+
+        <div class="rpb-section-title" style="margin-top:1.25rem;">Find any baseball program</div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:12px;">
+          <div style="font-weight:500;margin-bottom:4px;">ProductiveRecruit.com</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">Complete, searchable list of every NCAA D1/D2/D3, NAIA, and JUCO program. Filter by state, division. Free.</div>
+          <a href="https://productiverecruit.com/baseball" target="_blank" rel="noopener" style="font-size:13px;">productiverecruit.com/baseball</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:12px;">
+          <div style="font-weight:500;margin-bottom:4px;">NCSA Sports — D1/D2/D3/NAIA colleges</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">School profiles with academic data, costs, location. Good for evaluating fit beyond baseball.</div>
+          <a href="https://www.ncsasports.org/baseball" target="_blank" rel="noopener" style="font-size:13px;">ncsasports.org/baseball</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:12px;">
+          <div style="font-weight:500;margin-bottom:4px;">The Baseball Observer — Programs by state</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">Direct links to every program's official athletics website — fastest way to find current coach contact info.</div>
+          <a href="http://www.atballiance.org/college-bb-websites.html" target="_blank" rel="noopener" style="font-size:13px;">atballiance.org/college-bb-websites.html</a>
+        </div>
+
+        <div class="rpb-section-title">Official governing body directories</div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">NCAA Directory</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">Source of truth for D1/D2/D3 membership. Register for eligibility here.</div>
+          <a href="https://web3.ncaa.org/directory/" target="_blank" rel="noopener" style="font-size:13px;">ncaa.org directory</a> &nbsp;·&nbsp;
+          <a href="https://eligibilitycenter.org" target="_blank" rel="noopener" style="font-size:13px;">eligibilitycenter.org (register for D1/D2)</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">NAIA</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">190+ schools. Separate eligibility center from NCAA.</div>
+          <a href="https://www.naia.org/sports/bsb" target="_blank" rel="noopener" style="font-size:13px;">naia.org baseball</a> &nbsp;·&nbsp;
+          <a href="https://play.mynaia.org" target="_blank" rel="noopener" style="font-size:13px;">play.mynaia.org (register)</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">NJCAA (JUCO outside California)</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">400+ JUCO programs across D1, D2, D3 in 43 states.</div>
+          <a href="https://www.njcaa.org/sports/bsb/index" target="_blank" rel="noopener" style="font-size:13px;">njcaa.org baseball</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">CCCAA (California JUCO)</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">85 California community college programs. Separate from NJCAA.</div>
+          <a href="https://www.cccaasports.org/sports/bsb" target="_blank" rel="noopener" style="font-size:13px;">cccaasports.org baseball</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">NWAC (Pacific NW JUCO)</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">15 programs in WA and OR. Separate from NJCAA.</div>
+          <a href="https://nwacsports.com/sports/bsb" target="_blank" rel="noopener" style="font-size:13px;">nwacsports.com baseball</a>
+        </div>
+
+        <div class="rpb-section-title">Showcases & exposure</div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">Prep Baseball Report (PBR)</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">State-by-state rankings and showcases. Attended by college recruiters.</div>
+          <a href="https://www.prepbaseballreport.com/colorado" target="_blank" rel="noopener" style="font-size:13px;">PBR Colorado</a>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;">
+          <div style="font-weight:500;margin-bottom:4px;">Perfect Game</div>
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;">National showcase circuit. Top-tier events scouted heavily.</div>
+          <a href="https://www.perfectgame.org" target="_blank" rel="noopener" style="font-size:13px;">perfectgame.org</a>
+        </div>
+
+        <div class="rpb-section-title">Workflow cheat sheet</div>
+        <div style="background:var(--color-background-secondary);padding:14px;border-radius:var(--border-radius-md);margin-bottom:8px;font-size:14px;line-height:1.6;">
+          <b>Finding a school not in the app:</b><br>
+          1. Go to ProductiveRecruit or NCSA. Filter by state and division.<br>
+          2. Click into a program. Note the school name, state, division.<br>
+          3. In this app, go to <b>Colleges</b> tab → <b>+ Add college</b>. Enter the info.<br>
+          4. Click <b>+ Track</b> next to the school to add it to your active list.<br><br>
+
+          <b>Finding current coach contact info:</b><br>
+          1. Google: <code>[school name] baseball staff</code> — first result is usually the official page.<br>
+          2. Or go to atballiance.org → find the school → click their athletics site.<br>
+          3. Copy head coach + pitching coach email. Paste into the Tracker.<br>
+          4. <b>Always verify coach is current</b> — staff turnover is high at every level.<br><br>
+
+          <b>Email workflow for this week:</b><br>
+          1. Build target list: 30-50 schools to start. Mix of reach/target/safety.<br>
+          2. Profile tab → fill every field. Click "Download profile .txt" for a clean 1-pager.<br>
+          3. Profile tab → generate email by tier (JUCO/NAIA/D3). Copy to clipboard.<br>
+          4. Paste into Gmail. Personalize the first line to reference something specific about the program.<br>
+          5. Send. Mark as "Sent" in Tracker. App will flag follow-ups at 7 and 17 days.<br><br>
+
+          <b>Roman-specific targets (78-81 LHP, 3.6W / 3.3UW GPA):</b><br>
+          <b>Tier 1 (most realistic):</b> CA/AZ/FL JUCO — developmental path, play right away, transfer up after 2 years<br>
+          <b>Tier 2 (realistic):</b> NAIA in warm states (CalPac, GSAC, Cascade conferences)<br>
+          <b>Tier 3 (academic leverage):</b> D3 in warm states + high-academic D3 anywhere — GPA helps here<br>
+          <b>Tier 4 (reach):</b> D2 in CO (Colorado Mesa, CSU Pueblo, UCCS, Metro State Denver) — strong arm-side development needed first
+        </div>
+      </div>`;
       c.innerHTML = h; return;
     }
   }
