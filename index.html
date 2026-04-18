@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recruiting Profile Builder</title>
+<style>
+  :root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f5f5f4;
+    --color-background-tertiary: #f0efed;
+    --color-background-info: #e6f1fb;
+    --color-text-info: #0c447c;
+    --color-background-success: #e1f5ee;
+    --color-text-success: #085041;
+    --color-background-warning: #faeeda;
+    --color-text-warning: #633806;
+    --color-background-danger: #fcebeb;
+    --color-text-danger: #791f1f;
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #595959;
+    --color-text-tertiary: #8a8a8a;
+    --color-border-tertiary: #e5e5e5;
+    --color-border-info: #b8d4ec;
+    --border-radius-md: 6px;
+    --border-radius-lg: 10px;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+  }
+  .app-header {
+    background: var(--color-background-primary);
+    border-bottom: 1px solid var(--color-border-tertiary);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .app-header h1 { font-size: 18px; font-weight: 600; margin: 0; }
+  .app-header .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .app-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  button {
+    border: 1px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--color-text-primary);
+    transition: background 0.1s;
+  }
+  button:hover { background: var(--color-background-tertiary); }
+  input, select, textarea {
+    border: 1px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    padding: 6px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+    color: var(--color-text-primary);
+  }
+  textarea { resize: vertical; font-family: inherit; }
+  .rpb-nav { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--color-border-tertiary); padding-bottom: 10px; }
+  .rpb-nav button { padding: 7px 12px; font-size: 13px; }
+  .rpb-nav button.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); }
+  .rpb-card { background: var(--color-background-primary); border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+  .rpb-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .rpb-field label { font-size: 13px; color: var(--color-text-secondary); }
+  .rpb-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .rpb-grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .rpb-grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); gap: 8px; }
+  .rpb-stat-field label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+  .rpb-stat-field input { padding: 6px 8px; text-align: center; font-size: 14px; }
+  .rpb-metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .rpb-metric-label { font-size: 11px; color: var(--color-text-secondary); }
+  .rpb-metric-value { font-size: 20px; font-weight: 500; margin-top: 2px; }
+  .rpb-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); margin-right: 6px; }
+  .rpb-badge.juco { background: #E6F1FB; color: #0C447C; }
+  .rpb-badge.naia { background: #FAEEDA; color: #633806; }
+  .rpb-badge.d2 { background: #FBEAF0; color: #72243E; }
+  .rpb-badge.d3 { background: #E1F5EE; color: #085041; }
+  .rpb-badge.d1 { background: #FCEBEB; color: #791F1F; }
+  .rpb-badge.p { background: #EEEDFE; color: #3C3489; }
+  .rpb-badge.h { background: #E1F5EE; color: #085041; }
+  .rpb-badge.f { background: #FAEEDA; color: #633806; }
+  .rpb-badge.star { background: #FAEEDA; color: #633806; }
+  .rpb-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--color-border-tertiary); gap: 12px; }
+  .rpb-row:last-child { border-bottom: none; }
+  .rpb-empty { text-align: center; color: var(--color-text-tertiary); padding: 2rem 1rem; font-size: 14px; }
+  .rpb-inline-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rpb-inline-btns button { padding: 4px 10px; font-size: 12px; }
+  .rpb-filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .rpb-filter-row select, .rpb-filter-row input { flex: 1; min-width: 110px; }
+  .rpb-email-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+  .rpb-player-pill { display: inline-flex; background: var(--color-background-secondary); padding: 4px 10px; border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer; margin-right: 6px; margin-bottom: 6px; }
+  .rpb-player-pill.active { background: var(--color-background-info); color: var(--color-text-info); }
+  .rpb-section-title { font-size: 15px; font-weight: 500; margin: 1.25rem 0 10px; }
+  .rpb-section-title:first-child { margin-top: 0; }
+  .rpb-subsection { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rpb-toast { position: fixed; top: 20px; right: 20px; background: var(--color-background-success); color: var(--color-text-success); padding: 8px 14px; border-radius: var(--border-radius-md); font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .rpb-toast.show { opacity: 1; }
+  .rpb-todo-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-border-tertiary); }
+  .rpb-todo-item:last-child { border-bottom: none; }
+  .rpb-todo-check { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; }
+  .rpb-todo-title { font-size: 14px; font-weight: 500; }
+  .rpb-todo-title.done { text-decoration: line-through; color: var(--color-text-tertiary); font-weight: 400; }
+  .rpb-todo-detail { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; line-height: 1.5; }
+  .rpb-progress-bar { height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .rpb-progress-fill { height: 100%; background: #4ade80; transition: width 0.3s; }
+  .rpb-category-header { font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .rpb-game-row { padding: 12px; border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 8px; }
+  .rpb-game-stats { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+  .rpb-game-stats b { color: var(--color-text-primary); font-weight: 500; }
+  .rpb-toggle { display: inline-flex; border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .rpb-toggle button { border: none; border-radius: 0; border-right: 1px solid var(--color-border-tertiary); padding: 6px 14px; font-size: 13px; }
+  .rpb-toggle button:last-child { border-right: none; }
+  .rpb-toggle button.active { background: var(--color-background-info); color: var(--color-text-info); }
+  .rpb-divider { border: none; border-top: 1px solid var(--color-border-tertiary); margin: 14px 0; }
+  .rpb-status { font-size: 12px; padding: 2px 8px; border-radius: var(--border-radius-md); }
+  .rpb-status.pending { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .rpb-status.sent { background: var(--color-background-info); color: var(--color-text-info); }
+  .rpb-status.replied { background: var(--color-background-success); color: var(--color-text-success); }
+  .rpb-status.overdue { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .btn-primary { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); }
+  .btn-danger { color: var(--color-text-danger); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>🥎 Recruiting Profile Builder</h1>
+  <div class="actions">
+    <button onclick="rpbExportAll()">Export data</button>
+    <button onclick="document.getElementById('import-input').click()">Import data</button>
+    <input type="file" id="import-input" accept="application/json" style="display:none" onchange="rpbImportAll(event)">
+  </div>
+</div>
+
+<div id="rpb-toast" class="rpb-toast">Saved</div>
+
+<div class="app-container">
+  <div class="rpb-nav">
+    <button id="nav-players" class="active" onclick="rpbNav('players')">Players</button>
+    <button id="nav-profile" onclick="rpbNav('profile')">Profile & email</button>
+    <button id="nav-games" onclick="rpbNav('games')">Games</button>
+    <button id="nav-colleges" onclick="rpbNav('colleges')">Colleges</button>
+    <button id="nav-tracker" onclick="rpbNav('tracker')">Tracker</button>
+    <button id="nav-todo" onclick="rpbNav('todo')">To-do</button>
+  </div>
+  <div id="rpb-content"></div>
+</div>
+
+<script>
+(function() {
+  // --- localStorage wrapper (matches window.storage API used in the chat artifact) ---
+  const storage = {
+    async get(key) {
+      const v = localStorage.getItem(key);
+      return v ? { key, value: v } : null;
+    },
+    async set(key, value) {
+      localStorage.setItem(key, value);
+      return { key, value };
+    }
+  };
+
+  const DC = [
+    ['Orange Coast College','CA','JUCO',2.0,''],['Saddleback College','CA','JUCO',2.0,''],
+    ['Santa Barbara City College','CA','JUCO',2.0,''],['Riverside City College','CA','JUCO',2.0,''],
+    ['Palomar College','CA','JUCO',2.0,''],['Central Arizona College','AZ','JUCO',2.0,'D1 feeder'],
+    ['Scottsdale Community College','AZ','JUCO',2.0,''],['Chandler-Gilbert Community College','AZ','JUCO',2.0,''],
+    ['Mesa Community College','AZ','JUCO',2.0,''],['Otero College','CO','JUCO',2.0,'Local CO'],
+    ['Lamar Community College','CO','JUCO',2.0,''],['Trinidad State College','CO','JUCO',2.0,''],
+    ['Salt Lake Community College','UT','JUCO',2.0,''],['Snow College','UT','JUCO',2.0,''],
+    ['Arizona Christian University','AZ','NAIA',2.5,''],['Ottawa University Arizona','AZ','NAIA',2.5,''],
+    ['Embry-Riddle Aeronautical University','AZ','NAIA',3.0,'Strong academics'],
+    ["The Master's University",'CA','NAIA',2.5,''],['Hope International University','CA','NAIA',2.5,''],
+    ['Vanguard University','CA','NAIA',2.5,''],['Lewis-Clark State College','ID','NAIA',2.75,'Top NAIA'],
+    ['Whittier College','CA','D3',3.0,''],['University of La Verne','CA','D3',3.0,''],
+    ['California Lutheran University','CA','D3',3.0,''],['Occidental College','CA','D3',3.5,'High academic'],
+    ['Pomona-Pitzer','CA','D3',3.7,'Elite academic'],['Colorado College','CO','D3',3.5,'High academic'],
+    ['Willamette University','OR','D3',3.3,''],['Lewis & Clark College','OR','D3',3.3,''],
+    ['George Fox University','OR','D3',3.0,''],['Colorado Mesa University','CO','D2',2.75,''],
+    ['Colorado School of Mines','CO','D2',3.5,'Elite academic D2'],['Regis University','CO','D2',3.0,''],
+    ['Metropolitan State University of Denver','CO','D2',2.75,''],['University of Colorado Colorado Springs','CO','D2',2.75,'']
+  ].map((c,i) => ({id:'c'+(i+1), name:c[0], state:c[1], division:c[2], gpaMin:c[3], notes:c[4]}));
+
+  const TT = {
+    'Video — pitching reel': [
+      ['v1','Title card (5 sec)','Name, position, class, H/W, FB velo, GPA, school. Static, no music intro.'],
+      ['v2','Hook: 3 best strikeouts','First 20 seconds decide if the coach keeps watching. Lead with highest-leverage outs.'],
+      ['v3','Stat card (7 sec)','Season ERA, BA/RISP allowed, career IP, K/BB. Quick cut.'],
+      ['v4','Command sequence — 6 pitches','FB inside RHH, FB outside RHH, FB in to LHH, offspeed swing-miss, offspeed strike, FB up.'],
+      ['v5','RISP / composure at-bat','One full high-leverage at-bat with scoreboard context.'],
+      ['v6','Bullpen mechanics (25 sec)','2 FB side angle, 2 FB from behind, 1 offspeed each angle.'],
+      ['v7','Closing card (5 sec)','Name, phone, email, HS coach + email. Static.'],
+      ['v8','Upload to YouTube unlisted + Hudl','Title: "[Name] | [Position] | Class of [Year] | [velo] | [State]"']
+    ],
+    'Measurables': [
+      ['m1','Fastball velocity (current + top)','Rapsodo, Pocket Radar, or showcase reading.'],
+      ['m2','60-yard dash','Hand-timed acceptable but state that. Best of 3.'],
+      ['m3','Exit velocity','HitTrax, Rapsodo Hit, or tee session. Average + max.'],
+      ['m4','Arm velocity (if INF/OF)','Showcase setting is best.'],
+      ['m5','Pop time (catchers only)','Plate to 2B. Under 2.0 = high-level.'],
+      ['m6','Spin rate on primary pitches','Rapsodo required. Nice-to-have that moves you up stacks.']
+    ],
+    'Documents': [
+      ['d1','Official HS transcript','Request from counselor.'],
+      ['d2','NCAA Eligibility Center (D1/D2)','eligibilitycenter.org.'],
+      ['d3','NAIA Eligibility Center','play.mynaia.org.'],
+      ['d4','Test scores (SAT/ACT) if taken','Can unlock academic $ at D3.'],
+      ['d5','Tournament/showcase schedule','Share in outreach so coaches can come watch.'],
+      ['d6','Letters of recommendation','HS coach, travel coach, academic teacher.']
+    ],
+    'Outreach': [
+      ['o1','Complete 1-page PDF profile','Fill in Profile tab, then export.'],
+      ['o2','Build target list (50-100)','Use College database. Mix of reach/target/high-probability.'],
+      ['o3',"Find each coach's email",'[school].edu baseball staff page.'],
+      ['o4','Send first wave (30-40)','Priority 1 schools. Personalize first line.'],
+      ['o5','Send second wave (30-40)','Priority 2-3 about a week later.'],
+      ['o6','Follow-up #1 on wave 1','Tracker flags this 7-10 days after send.'],
+      ['o7','Follow-up #2 on wave 1','10-14 days after follow-up #1.']
+    ],
+    'Development': [
+      ['dev1','Velocity program','Driveline, weighted balls, long toss.'],
+      ['dev2','Strength & conditioning','Lower half and posterior chain.'],
+      ['dev3','Attend 1-2 showcases coaches will be at','PBR, Perfect Game, or regional JUCO/NAIA.'],
+      ['dev4','Unofficial visits to top 5 schools','Drive out, watch a game, meet the coach.']
+    ]
+  };
+  const TODO_TEMPLATE = {};
+  Object.entries(TT).forEach(([k,arr]) => {
+    TODO_TEMPLATE[k] = arr.map(x => ({id:x[0], title:x[1], detail:x[2]}));
+  });
+
+  let state = {
+    view: 'players', activePlayerId: null,
+    players: {}, colleges: DC, contacts: {}, todos: {}, games: {},
+    collegeFilter: { division:'', state:'', search:'' },
+    gameForm: null
+  };
+
+  async function loadState() {
+    const keys = [['rpb_players','players'],['rpb_colleges','colleges'],['rpb_contacts','contacts'],['rpb_todos','todos'],['rpb_games','games'],['rpb_active','activePlayerId']];
+    for (const [k,prop] of keys) {
+      try { const r = await storage.get(k); if (r && r.value) state[prop] = JSON.parse(r.value); } catch(e) {}
+    }
+    render();
+  }
+  async function save(key, val) { try { await storage.set(key, JSON.stringify(val)); toast('Saved'); } catch(e) {} }
+
+  function toast(msg) {
+    const t = document.getElementById('rpb-toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1500);
+  }
+
+  function ensureTodos(pid) {
+    if (!state.todos[pid]) {
+      state.todos[pid] = {};
+      Object.values(TODO_TEMPLATE).flat().forEach(i => state.todos[pid][i.id] = false);
+    }
+  }
+
+  function ipToDec(ip) {
+    if (!ip) return 0;
+    const n = parseFloat(ip); if (isNaN(n)) return 0;
+    const w = Math.floor(n); const f = Math.round((n - w) * 10);
+    if (f === 1) return w + 1/3; if (f === 2) return w + 2/3; return w;
+  }
+  function decToIp(d) {
+    const w = Math.floor(d); const f = d - w;
+    if (f > 0.6) return w + 0.2; if (f > 0.3) return w + 0.1; return w;
+  }
+
+  function seasonStats(pid) {
+    const gs = Object.values(state.games).filter(g => g.playerId === pid);
+    const P = {ip:0,h:0,r:0,er:0,bb:0,so:0,bf:0,hbp:0,games:0};
+    const H = {ab:0,h:0,r:0,rbi:0,bb:0,so:0,hr:0,d:0,t:0,hbp:0,sb:0,rab:0,rh:0,games:0};
+    const F = {po:0,a:0,e:0,dp:0};
+    gs.forEach(g => {
+      if (g.pitching && g.pitching.ip) {
+        P.ip += ipToDec(g.pitching.ip); P.h += +g.pitching.h||0; P.r += +g.pitching.r||0;
+        P.er += +g.pitching.er||0; P.bb += +g.pitching.bb||0; P.so += +g.pitching.so||0;
+        P.bf += +g.pitching.bf||0; P.hbp += +g.pitching.hbp||0; P.games++;
+      }
+      if (g.hitting && g.hitting.ab) {
+        H.ab += +g.hitting.ab||0; H.h += +g.hitting.h||0; H.r += +g.hitting.r||0;
+        H.rbi += +g.hitting.rbi||0; H.bb += +g.hitting.bb||0; H.so += +g.hitting.so||0;
+        H.hr += +g.hitting.hr||0; H.d += +g.hitting.d||0; H.t += +g.hitting.t||0;
+        H.hbp += +g.hitting.hbp||0; H.sb += +g.hitting.sb||0;
+        H.rab += +g.hitting.rab||0; H.rh += +g.hitting.rh||0; H.games++;
+      }
+      if (g.fielding) {
+        F.po += +g.fielding.po||0; F.a += +g.fielding.a||0;
+        F.e += +g.fielding.e||0; F.dp += +g.fielding.dp||0;
+      }
+    });
+    const era = P.ip>0 ? ((P.er*9)/P.ip).toFixed(2) : '—';
+    const whip = P.ip>0 ? ((P.h+P.bb)/P.ip).toFixed(2) : '—';
+    const baa = P.bf>P.bb+P.hbp ? (P.h/(P.bf-P.bb-P.hbp)).toFixed(3) : '—';
+    const kp9 = P.ip>0 ? ((P.so*9)/P.ip).toFixed(1) : '—';
+    const kbb = P.bb>0 ? (P.so/P.bb).toFixed(2) : (P.so>0?'∞':'—');
+    const s1 = H.h - H.d - H.t - H.hr;
+    const tb = s1 + H.d*2 + H.t*3 + H.hr*4;
+    const avg = H.ab>0 ? (H.h/H.ab).toFixed(3) : '—';
+    const od = H.ab+H.bb+H.hbp;
+    const obp = od>0 ? ((H.h+H.bb+H.hbp)/od).toFixed(3) : '—';
+    const slg = H.ab>0 ? (tb/H.ab).toFixed(3) : '—';
+    const ops = (avg!=='—'&&obp!=='—'&&slg!=='—') ? (parseFloat(obp)+parseFloat(slg)).toFixed(3) : '—';
+    const baRisp = H.rab>0 ? (H.rh/H.rab).toFixed(3) : '—';
+    const ch = F.po+F.a+F.e;
+    const fpct = ch>0 ? ((F.po+F.a)/ch).toFixed(3) : '—';
+    return {
+      pitching: {...P, ipDisplay:decToIp(P.ip).toFixed(1), era, whip, baa, kp9, kbb},
+      hitting: {...H, avg, obp, slg, ops, baRisp},
+      fielding: {...F, chances:ch, fpct}
+    };
+  }
+
+  window.rpbNav = function(v) {
+    state.view = v;
+    document.querySelectorAll('.rpb-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('nav-'+v).classList.add('active');
+    render();
+  };
+
+  window.rpbNewPlayer = function() {
+    const id = 'p_'+Date.now();
+    state.players[id] = {
+      id, name:'', gradYear:'2026', position:'LHP', secondaryPos:'',
+      bats:'R', throws:'L', height:'', weight:'',
+      school:'', city:'', stateLoc:'', gpaW:'', gpaUW:'',
+      email:'', phone:'', videoUrl:'', coachName:'', coachEmail:'',
+      fbVelo:'', fbTop:'', secondaryPitches:'', sixtyYd:'', exitVelo:'',
+      achievements:'', keyStats:'', summary:''
+    };
+    ensureTodos(id);
+    state.activePlayerId = id; state.view = 'profile';
+    save('rpb_players', state.players); save('rpb_todos', state.todos); save('rpb_active', state.activePlayerId);
+    document.getElementById('nav-players').classList.remove('active');
+    document.getElementById('nav-profile').classList.add('active');
+    render();
+  };
+
+  window.rpbSelectPlayer = function(id) {
+    state.activePlayerId = id; state.view = 'profile';
+    ensureTodos(id);
+    save('rpb_todos', state.todos); save('rpb_active', state.activePlayerId);
+    document.querySelectorAll('.rpb-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('nav-profile').classList.add('active');
+    render();
+  };
+
+  window.rpbDeletePlayer = function(id) {
+    if (!confirm('Delete this player and all their data?')) return;
+    delete state.players[id]; delete state.todos[id];
+    Object.keys(state.contacts).forEach(k => { if (k.startsWith(id+'_')) delete state.contacts[k]; });
+    Object.keys(state.games).forEach(k => { if (state.games[k].playerId === id) delete state.games[k]; });
+    if (state.activePlayerId === id) state.activePlayerId = null;
+    save('rpb_players', state.players); save('rpb_contacts', state.contacts);
+    save('rpb_todos', state.todos); save('rpb_games', state.games); save('rpb_active', state.activePlayerId);
+    render();
+  };
+
+  window.rpbUpd = function(field, val) {
+    if (!state.activePlayerId) return;
+    state.players[state.activePlayerId][field] = val;
+    clearTimeout(window._st);
+    window._st = setTimeout(() => save('rpb_players', state.players), 600);
+  };
+
+  window.rpbAutofillStats = function() {
+    if (!state.activePlayerId) return;
+    const s = seasonStats(state.activePlayerId);
+    const lines = [];
+    if (s.pitching.games > 0) {
+      lines.push(`${s.pitching.games} G | ${s.pitching.ipDisplay} IP | ${s.pitching.era} ERA | ${s.pitching.whip} WHIP | ${s.pitching.baa} BAA`);
+      lines.push(`${s.pitching.so} K | ${s.pitching.bb} BB | ${s.pitching.kbb} K/BB | ${s.pitching.kp9} K/9`);
+    }
+    if (s.hitting.games > 0) {
+      lines.push(`${s.hitting.games} G | ${s.hitting.avg} AVG | ${s.hitting.obp} OBP | ${s.hitting.slg} SLG | ${s.hitting.h}-${s.hitting.ab}`);
+      if (s.hitting.rab > 0) lines.push(`${s.hitting.baRisp} BA/RISP (${s.hitting.rh}-${s.hitting.rab})`);
+    }
+    if (s.fielding.chances > 0) lines.push(`${s.fielding.po} PO | ${s.fielding.a} A | ${s.fielding.e} E | ${s.fielding.fpct} FLD%`);
+    if (lines.length === 0) { alert('Log some games first.'); return; }
+    state.players[state.activePlayerId].keyStats = lines.join('\n');
+    save('rpb_players', state.players); render();
+  };
+
+  window.rpbGenEmail = function(tier) {
+    const p = state.players[state.activePlayerId];
+    if (!p || !p.name) { alert('Fill in the player name first.'); return; }
+    const velo = p.fbVelo ? `${p.fbVelo}${p.fbTop?' (T '+p.fbTop+')':''} mph` : 'Developing velocity';
+    const gpa = p.gpaW||p.gpaUW ? `${p.gpaW?p.gpaW+'W':''}${p.gpaW&&p.gpaUW?' / ':''}${p.gpaUW?p.gpaUW+'UW':''}` : 'Strong student';
+    const loc = [p.city, p.stateLoc].filter(Boolean).join(', ');
+    const posFull = p.position==='LHP'?'left-handed pitcher':p.position==='RHP'?'right-handed pitcher':p.position;
+    const sig = `${p.name}\n${p.phone||''}${p.phone&&p.email?' | ':''}${p.email||''}`;
+    let subj, body;
+
+    if (tier === 'juco') {
+      subj = `${p.gradYear} ${p.position} — ${p.stateLoc||'CO'} — ${velo}`;
+      body = `Coach,\n\nMy name is ${p.name}, a ${p.gradYear} ${posFull} from ${p.school||'[school]'} in ${loc||'[city]'}. I'm interested in competing at the JUCO level and believe your program offers the development path I'm looking for.\n\nQuick profile:\n- Position: ${p.position}${p.secondaryPos?' / '+p.secondaryPos:''}\n- B/T: ${p.bats}/${p.throws} · ${p.height||'[H]'} / ${p.weight||'[W]'}\n- Fastball: ${velo}${p.secondaryPitches?'\n- Secondary: '+p.secondaryPitches:''}\n- GPA: ${gpa}\n\n${p.summary||p.keyStats||'I compete in every role and take pride in my command, composure, and development year over year.'}\n\nVideo: ${p.videoUrl||'[link]'}\n\nI'd welcome the chance to learn more about your program.\n\nThank you, Coach.\n\n${sig}`;
+    } else if (tier === 'naia') {
+      subj = `${p.gradYear} ${p.position} — ${gpa.split(' ')[0]} — ${p.name}`;
+      body = `Coach,\n\nMy name is ${p.name}, a ${p.gradYear} ${posFull} from ${p.school||'[school]'} in ${loc||'[city]'}. Your NAIA program stood out as a place I could compete early, develop, and continue growing academically.\n\n- Position: ${p.position}${p.secondaryPos?' / '+p.secondaryPos:''}\n- B/T: ${p.bats}/${p.throws} · ${p.height||'[H]'} / ${p.weight||'[W]'}\n- Fastball: ${velo} with continued projection\n- GPA: ${gpa}${p.achievements?'\n- '+p.achievements.split('\n').join('\n- '):''}\n\n${p.summary||'I take pride in being a competitor who limits hard contact, throws strikes in any count, and shows up for my teammates.'}\n\nVideo: ${p.videoUrl||'[link]'}\n\nThank you, Coach.\n\n${sig}`;
+    } else if (tier === 'd3') {
+      subj = `${p.gradYear} student-athlete ${p.position} — ${gpa} — ${p.name}`;
+      body = `Coach,\n\nMy name is ${p.name}, a ${p.gradYear} ${posFull} from ${p.school||'[school]'} in ${loc||'[city]'}. I'm looking for a program where I can compete at a high level while earning a strong academic degree.\n\n- GPA: ${gpa}\n- Position: ${p.position}${p.secondaryPos?' / '+p.secondaryPos:''}\n- B/T: ${p.bats}/${p.throws} · ${p.height||'[H]'} / ${p.weight||'[W]'}\n- Fastball: ${velo}${p.secondaryPitches?'\n- Pitch mix: '+p.secondaryPitches:''}${p.achievements?'\n- '+p.achievements.split('\n').join('\n- '):''}\n\n${p.summary||'I bring command, baseball IQ, and a team-first approach.'}\n\nVideo: ${p.videoUrl||'[link]'}\n\nThank you, Coach.\n\n${sig}`;
+    } else if (tier === 'f1') {
+      subj = `Following up — ${p.name} ${p.gradYear} ${p.position}`;
+      body = `Coach,\n\nI wanted to follow up on my previous email and reiterate my continued interest in your program.\n\nI've continued to work and compete this season. Video: ${p.videoUrl||'[link]'}\n\nIf you're still recruiting for ${p.gradYear}, I'd welcome the chance to connect.\n\nThank you, Coach.\n\n${sig}`;
+    } else {
+      subj = `Quick follow-up — ${p.name} ${p.gradYear} ${p.position}`;
+      body = `Coach,\n\nChecking in one more time. I'm continuing to develop and compete, and I'd love the opportunity to connect about your ${p.gradYear} class.\n\nVideo: ${p.videoUrl||'[link]'}\n\nThanks, Coach.\n\n${sig}`;
+    }
+    document.getElementById('rpb-subject').textContent = 'Subject: '+subj;
+    document.getElementById('rpb-email').textContent = body;
+  };
+
+  window.rpbCopyEmail = function() {
+    const s = document.getElementById('rpb-subject').textContent;
+    const b = document.getElementById('rpb-email').textContent;
+    navigator.clipboard.writeText(s+'\n\n'+b).then(() => toast('Copied'));
+  };
+
+  window.rpbFilter = function(f, v) { state.collegeFilter[f] = v; render(); };
+
+  window.rpbAddCollege = function() {
+    const n = prompt('College name:'); if (!n) return;
+    const s = (prompt('State (2-letter):')||'').toUpperCase();
+    const d = (prompt('Division (JUCO, NAIA, D1, D2, D3):')||'D3').toUpperCase();
+    state.colleges.push({id:'c_'+Date.now(), name:n, state:s, division:d, gpaMin:2.5, notes:''});
+    save('rpb_colleges', state.colleges); render();
+  };
+
+  window.rpbTrack = function(cid) {
+    if (!state.activePlayerId) { alert('Select a player first.'); return; }
+    const k = state.activePlayerId+'_'+cid;
+    if (state.contacts[k]) { alert('Already tracking.'); return; }
+    state.contacts[k] = {playerId:state.activePlayerId, collegeId:cid, coachEmail:'', status:'pending', sentDate:null, followup1Date:null, followup2Date:null, notes:''};
+    save('rpb_contacts', state.contacts); toast('Added'); render();
+  };
+
+  window.rpbUpdContact = function(k, f, v) {
+    state.contacts[k][f] = v;
+    clearTimeout(window._ct);
+    window._ct = setTimeout(() => save('rpb_contacts', state.contacts), 600);
+  };
+
+  window.rpbSent = function(k) { state.contacts[k].status='sent'; state.contacts[k].sentDate = new Date().toISOString().slice(0,10); save('rpb_contacts', state.contacts); render(); };
+  window.rpbReplied = function(k) { state.contacts[k].status='replied'; save('rpb_contacts', state.contacts); render(); };
+  window.rpbRmContact = function(k) { if (!confirm('Remove?')) return; delete state.contacts[k]; save('rpb_contacts', state.contacts); render(); };
+
+  window.rpbTodo = function(id) {
+    if (!state.activePlayerId) return;
+    ensureTodos(state.activePlayerId);
+    state.todos[state.activePlayerId][id] = !state.todos[state.activePlayerId][id];
+    save('rpb_todos', state.todos); render();
+  };
+  window.rpbResetTodos = function() {
+    if (!state.activePlayerId || !confirm('Reset all to-dos?')) return;
+    Object.values(TODO_TEMPLATE).flat().forEach(i => state.todos[state.activePlayerId][i.id] = false);
+    save('rpb_todos', state.todos); render();
+  };
+
+  window.rpbExport = function() {
+    const p = state.players[state.activePlayerId]; if (!p) return;
+    const t = `${p.name.toUpperCase()}\n${p.position}${p.secondaryPos?' / '+p.secondaryPos:''} | Bats ${p.bats} / Throws ${p.throws} | Class of ${p.gradYear}\n${p.school}${p.city?' — '+p.city:''}${p.stateLoc?', '+p.stateLoc:''}\n${p.height} / ${p.weight}\n\nCONTACT\nPhone: ${p.phone}\nEmail: ${p.email}\nVideo: ${p.videoUrl}\n\nACADEMICS\nGPA: ${p.gpaW}W / ${p.gpaUW}UW\n\nMEASURABLES\nFastball: ${p.fbVelo} mph${p.fbTop?' (T '+p.fbTop+')':''}\nSecondary: ${p.secondaryPitches}\n60-yard: ${p.sixtyYd}\nExit velo: ${p.exitVelo}\n\nSUMMARY\n${p.summary}\n\nKEY STATS\n${p.keyStats}\n\nACHIEVEMENTS\n${p.achievements}\n\nHS COACH\n${p.coachName} — ${p.coachEmail}\n`;
+    const b = new Blob([t], {type:'text/plain'});
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a'); a.href = u; a.download = (p.name||'player').replace(/\s+/g,'_')+'_profile.txt'; a.click();
+    URL.revokeObjectURL(u);
+  };
+
+  // --- Full data export/import for device syncing ---
+  window.rpbExportAll = function() {
+    const data = {
+      version: 1,
+      exportDate: new Date().toISOString(),
+      players: state.players,
+      colleges: state.colleges,
+      contacts: state.contacts,
+      todos: state.todos,
+      games: state.games,
+      activePlayerId: state.activePlayerId
+    };
+    const b = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a');
+    a.href = u;
+    a.download = 'recruiting-data-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    URL.revokeObjectURL(u);
+    toast('Exported');
+  };
+
+  window.rpbImportAll = function(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!confirm('This will replace all current data. Continue?')) return;
+        if (data.players) state.players = data.players;
+        if (data.colleges) state.colleges = data.colleges;
+        if (data.contacts) state.contacts = data.contacts;
+        if (data.todos) state.todos = data.todos;
+        if (data.games) state.games = data.games;
+        if (data.activePlayerId) state.activePlayerId = data.activePlayerId;
+        save('rpb_players', state.players);
+        save('rpb_colleges', state.colleges);
+        save('rpb_contacts', state.contacts);
+        save('rpb_todos', state.todos);
+        save('rpb_games', state.games);
+        save('rpb_active', state.activePlayerId);
+        toast('Imported');
+        render();
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  window.rpbNewGame = function() {
+    if (!state.activePlayerId) { alert('Select a player first.'); return; }
+    state.gameForm = {
+      id:'g_'+Date.now(), playerId:state.activePlayerId, date:new Date().toISOString().slice(0,10),
+      opponent:'', result:'', notes:'', highlight:false, activeSection:'pitching',
+      pitching:{ip:'',bf:'',h:'',r:'',er:'',bb:'',so:'',hbp:'',w:0,l:0,sv:0},
+      hitting:{ab:'',h:'',r:'',rbi:'',bb:'',so:'',hr:'',d:'',t:'',hbp:'',sb:'',rab:'',rh:''},
+      fielding:{po:'',a:'',e:'',dp:'',position:''}
+    };
+    render();
+  };
+  window.rpbEditGame = function(gid) {
+    state.gameForm = JSON.parse(JSON.stringify(state.games[gid]));
+    state.gameForm.activeSection = 'pitching';
+    render();
+  };
+  window.rpbCancelGame = function() { state.gameForm = null; render(); };
+  window.rpbGF = function(sec, f, v) {
+    if (sec === 'meta') state.gameForm[f] = v;
+    else state.gameForm[sec][f] = v;
+  };
+  window.rpbGFToggle = function(f) { state.gameForm[f] = !state.gameForm[f]; render(); };
+  window.rpbGFSec = function(s) { state.gameForm.activeSection = s; render(); };
+  window.rpbSaveGame = function() {
+    const g = state.gameForm;
+    if (!g.opponent) { alert('Opponent is required.'); return; }
+    state.games[g.id] = {id:g.id, playerId:g.playerId, date:g.date, opponent:g.opponent, result:g.result, notes:g.notes, highlight:g.highlight, pitching:g.pitching, hitting:g.hitting, fielding:g.fielding};
+    state.gameForm = null;
+    save('rpb_games', state.games); render();
+  };
+  window.rpbDelGame = function(gid) {
+    if (!confirm('Delete this game?')) return;
+    delete state.games[gid]; save('rpb_games', state.games); render();
+  };
+  window.rpbStar = function(gid) { state.games[gid].highlight = !state.games[gid].highlight; save('rpb_games', state.games); render(); };
+
+  function daysSince(d) { if (!d) return null; return Math.floor((new Date() - new Date(d)) / 86400000); }
+
+  function renderGameForm() {
+    const g = state.gameForm;
+    const p = state.players[g.playerId];
+    const sec = g.activeSection;
+    let fields, html = '';
+    if (sec === 'pitching') {
+      fields = [['ip','IP','5.2'],['bf','BF',''],['h','H',''],['r','R',''],['er','ER',''],['bb','BB',''],['so','SO',''],['hbp','HBP','']];
+      html = `<div class="rpb-subsection">Standard pitching</div><div class="rpb-grid-stats">${fields.map(f=>`<div class="rpb-stat-field"><label>${f[1]}</label><input value="${g.pitching[f[0]]}" placeholder="${f[2]}" oninput="rpbGF('pitching','${f[0]}',this.value)"></div>`).join('')}</div>
+      <div class="rpb-subsection">Decision</div><div class="rpb-grid-stats">
+      <div class="rpb-stat-field"><label>W</label><input type="number" min="0" max="1" value="${g.pitching.w}" oninput="rpbGF('pitching','w',this.value)"></div>
+      <div class="rpb-stat-field"><label>L</label><input type="number" min="0" max="1" value="${g.pitching.l}" oninput="rpbGF('pitching','l',this.value)"></div>
+      <div class="rpb-stat-field"><label>SV</label><input type="number" min="0" max="1" value="${g.pitching.sv}" oninput="rpbGF('pitching','sv',this.value)"></div>
+      </div><p style="font-size:12px;color:var(--color-text-tertiary);margin-top:8px;">IP uses baseball notation: 5.1 = 5⅓, 5.2 = 5⅔.</p>`;
+    } else if (sec === 'hitting') {
+      const basic = [['ab','AB'],['h','H'],['r','R'],['rbi','RBI'],['bb','BB'],['so','SO'],['hbp','HBP'],['sb','SB']];
+      const xbh = [['d','2B'],['t','3B'],['hr','HR']];
+      const risp = [['rab','RISP AB'],['rh','RISP H']];
+      html = `<div class="rpb-subsection">Standard hitting</div><div class="rpb-grid-stats">${basic.map(f=>`<div class="rpb-stat-field"><label>${f[1]}</label><input value="${g.hitting[f[0]]}" oninput="rpbGF('hitting','${f[0]}',this.value)"></div>`).join('')}</div>
+      <div class="rpb-subsection">Extra-base hits</div><div class="rpb-grid-stats">${xbh.map(f=>`<div class="rpb-stat-field"><label>${f[1]}</label><input value="${g.hitting[f[0]]}" oninput="rpbGF('hitting','${f[0]}',this.value)"></div>`).join('')}</div>
+      <div class="rpb-subsection">Runners in scoring position</div><div class="rpb-grid-stats">${risp.map(f=>`<div class="rpb-stat-field"><label>${f[1]}</label><input value="${g.hitting[f[0]]}" oninput="rpbGF('hitting','${f[0]}',this.value)"></div>`).join('')}</div>`;
+    } else {
+      fields = [['po','PO'],['a','A'],['e','E'],['dp','DP']];
+      html = `<div class="rpb-subsection">Fielding</div>
+      <div class="rpb-field"><label>Position played</label><input value="${g.fielding.position}" placeholder="SS / OF / P" oninput="rpbGF('fielding','position',this.value)"></div>
+      <div class="rpb-grid-stats">${fields.map(f=>`<div class="rpb-stat-field"><label>${f[1]}</label><input value="${g.fielding[f[0]]}" oninput="rpbGF('fielding','${f[0]}',this.value)"></div>`).join('')}</div>`;
+    }
+    return `<div class="rpb-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:8px;flex-wrap:wrap;">
+        <h2 style="margin:0;font-size:17px;font-weight:500;">${state.games[g.id]?'Edit':'Log'} game — ${p.name||'Player'}</h2>
+        <div class="rpb-inline-btns"><button onclick="rpbCancelGame()">Cancel</button><button onclick="rpbSaveGame()" class="btn-primary">Save</button></div>
+      </div>
+      <div class="rpb-grid2">
+        <div class="rpb-field"><label>Date</label><input type="date" value="${g.date}" oninput="rpbGF('meta','date',this.value)"></div>
+        <div class="rpb-field"><label>Opponent *</label><input value="${g.opponent}" placeholder="Fort Lupton" oninput="rpbGF('meta','opponent',this.value)"></div>
+        <div class="rpb-field"><label>Result</label><input value="${g.result}" placeholder="W 7-3" oninput="rpbGF('meta','result',this.value)"></div>
+        <div class="rpb-field" style="justify-content:center;"><label style="cursor:pointer;"><input type="checkbox" ${g.highlight?'checked':''} onchange="rpbGFToggle('highlight')"> Highlight game (for video)</label></div>
+      </div>
+      <hr class="rpb-divider">
+      <div style="margin-bottom:12px;">
+        <div class="rpb-toggle">
+          <button class="${sec==='pitching'?'active':''}" onclick="rpbGFSec('pitching')">Pitching</button>
+          <button class="${sec==='hitting'?'active':''}" onclick="rpbGFSec('hitting')">Hitting</button>
+          <button class="${sec==='fielding'?'active':''}" onclick="rpbGFSec('fielding')">Fielding</button>
+        </div>
+        <p style="font-size:12px;color:var(--color-text-tertiary);margin-top:8px;">Fill in only sections that apply. Copy numbers from GameChanger left-to-right.</p>
+      </div>
+      ${html}
+      <hr class="rpb-divider">
+      <div class="rpb-field"><label>Notes</label><textarea rows="3" oninput="rpbGF('meta','notes',this.value)">${g.notes}</textarea></div>
+    </div>`;
+  }
+
+  function render() {
+    const c = document.getElementById('rpb-content');
+    const PL = Object.values(state.players);
+
+    if (state.view === 'players') {
+      let h = `<div class="rpb-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h2 style="margin:0;font-size:17px;font-weight:500;">Players</h2><button onclick="rpbNewPlayer()" class="btn-primary">+ New player</button></div>`;
+      if (PL.length === 0) h += `<div class="rpb-empty">No players yet. Click "New player" to start.</div>`;
+      else h += PL.map(p => {
+        const cc = Object.keys(state.contacts).filter(k => k.startsWith(p.id+'_')).length;
+        const gc = Object.values(state.games).filter(g => g.playerId === p.id).length;
+        const td = state.todos[p.id]||{}; const tot = Object.values(TODO_TEMPLATE).flat().length;
+        const dn = Object.values(td).filter(Boolean).length;
+        const pct = tot>0 ? Math.round(dn/tot*100) : 0;
+        return `<div class="rpb-row"><div style="flex:1;min-width:0;"><div style="font-weight:500;">${p.name||'Unnamed'}</div><div style="font-size:13px;color:var(--color-text-secondary);">${p.position||'—'} · ${p.gradYear} · ${gc} games · ${cc} schools · ${pct}% prep</div></div><div class="rpb-inline-btns"><button onclick="rpbSelectPlayer('${p.id}')">Open</button><button onclick="rpbDeletePlayer('${p.id}')" class="btn-danger">Del</button></div></div>`;
+      }).join('');
+      h += '</div>';
+      c.innerHTML = h; return;
+    }
+
+    if (state.view === 'profile') {
+      if (!state.activePlayerId || !state.players[state.activePlayerId]) { c.innerHTML = `<div class="rpb-empty">Select a player from Players tab.</div>`; return; }
+      const p = state.players[state.activePlayerId];
+      let h = `<div style="margin-bottom:1rem;">${PL.map(pl=>`<span class="rpb-player-pill ${pl.id===state.activePlayerId?'active':''}" onclick="rpbSelectPlayer('${pl.id}')">${pl.name||'Unnamed'}</span>`).join('')}</div>
+      <div class="rpb-card">
+        <div class="rpb-section-title">Basics</div>
+        <div class="rpb-grid2">
+          <div class="rpb-field"><label>Full name</label><input value="${p.name}" oninput="rpbUpd('name',this.value)"></div>
+          <div class="rpb-field"><label>Graduation year</label><input value="${p.gradYear}" oninput="rpbUpd('gradYear',this.value)"></div>
+          <div class="rpb-field"><label>Primary position</label><select onchange="rpbUpd('position',this.value)">${['LHP','RHP','C','1B','2B','3B','SS','OF','UTIL'].map(x=>`<option ${p.position===x?'selected':''}>${x}</option>`).join('')}</select></div>
+          <div class="rpb-field"><label>Secondary position</label><input value="${p.secondaryPos}" oninput="rpbUpd('secondaryPos',this.value)"></div>
+          <div class="rpb-field"><label>Bats</label><select onchange="rpbUpd('bats',this.value)">${['R','L','S'].map(x=>`<option ${p.bats===x?'selected':''}>${x}</option>`).join('')}</select></div>
+          <div class="rpb-field"><label>Throws</label><select onchange="rpbUpd('throws',this.value)">${['R','L'].map(x=>`<option ${p.throws===x?'selected':''}>${x}</option>`).join('')}</select></div>
+          <div class="rpb-field"><label>Height</label><input value="${p.height}" placeholder="5'10&quot;" oninput="rpbUpd('height',this.value)"></div>
+          <div class="rpb-field"><label>Weight</label><input value="${p.weight}" oninput="rpbUpd('weight',this.value)"></div>
+        </div>
+        <div class="rpb-section-title">School & location</div>
+        <div class="rpb-grid2">
+          <div class="rpb-field"><label>High school</label><input value="${p.school}" oninput="rpbUpd('school',this.value)"></div>
+          <div class="rpb-field"><label>City</label><input value="${p.city}" oninput="rpbUpd('city',this.value)"></div>
+          <div class="rpb-field"><label>State</label><input value="${p.stateLoc}" oninput="rpbUpd('stateLoc',this.value)"></div>
+          <div class="rpb-field"><label>GPA weighted</label><input value="${p.gpaW}" oninput="rpbUpd('gpaW',this.value)"></div>
+          <div class="rpb-field"><label>GPA unweighted</label><input value="${p.gpaUW}" oninput="rpbUpd('gpaUW',this.value)"></div>
+        </div>
+        <div class="rpb-section-title">Contact</div>
+        <div class="rpb-grid2">
+          <div class="rpb-field"><label>Player email</label><input value="${p.email}" oninput="rpbUpd('email',this.value)"></div>
+          <div class="rpb-field"><label>Player phone</label><input value="${p.phone}" oninput="rpbUpd('phone',this.value)"></div>
+          <div class="rpb-field"><label>Video link</label><input value="${p.videoUrl}" oninput="rpbUpd('videoUrl',this.value)"></div>
+          <div class="rpb-field"><label>HS head coach</label><input value="${p.coachName}" oninput="rpbUpd('coachName',this.value)"></div>
+          <div class="rpb-field"><label>HS coach email</label><input value="${p.coachEmail}" oninput="rpbUpd('coachEmail',this.value)"></div>
+        </div>
+        <div class="rpb-section-title">Measurables</div>
+        <div class="rpb-grid3">
+          <div class="rpb-field"><label>Fastball velo</label><input value="${p.fbVelo}" placeholder="78-81" oninput="rpbUpd('fbVelo',this.value)"></div>
+          <div class="rpb-field"><label>Top velo</label><input value="${p.fbTop}" oninput="rpbUpd('fbTop',this.value)"></div>
+          <div class="rpb-field"><label>Secondary pitches</label><input value="${p.secondaryPitches}" placeholder="CB / CH" oninput="rpbUpd('secondaryPitches',this.value)"></div>
+          <div class="rpb-field"><label>60-yard</label><input value="${p.sixtyYd}" oninput="rpbUpd('sixtyYd',this.value)"></div>
+          <div class="rpb-field"><label>Exit velo</label><input value="${p.exitVelo}" oninput="rpbUpd('exitVelo',this.value)"></div>
+        </div>
+        <div class="rpb-section-title">Narrative</div>
+        <div class="rpb-field"><label>Player summary</label><textarea rows="3" oninput="rpbUpd('summary',this.value)">${p.summary}</textarea></div>
+        <div class="rpb-field"><label style="display:flex;justify-content:space-between;align-items:center;"><span>Key stats</span><button onclick="rpbAutofillStats()" style="font-size:11px;padding:2px 8px;">↻ Auto-fill from games</button></label><textarea rows="4" oninput="rpbUpd('keyStats',this.value)">${p.keyStats}</textarea></div>
+        <div class="rpb-field"><label>Achievements</label><textarea rows="4" oninput="rpbUpd('achievements',this.value)">${p.achievements}</textarea></div>
+        <div style="margin-top:1rem;"><button onclick="rpbExport()">Download profile .txt</button></div>
+      </div>
+      <div class="rpb-card">
+        <div class="rpb-section-title">Email generator</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button onclick="rpbGenEmail('juco')">JUCO</button>
+          <button onclick="rpbGenEmail('naia')">NAIA</button>
+          <button onclick="rpbGenEmail('d3')">D3</button>
+          <button onclick="rpbGenEmail('f1')">Follow-up #1</button>
+          <button onclick="rpbGenEmail('f2')">Follow-up #2</button>
+        </div>
+        <div id="rpb-subject" style="font-size:13px;font-weight:500;margin-bottom:8px;">Subject: (click a button)</div>
+        <div class="rpb-email-box" id="rpb-email">Click a button to generate a tailored email.</div>
+        <div style="margin-top:8px;"><button onclick="rpbCopyEmail()">Copy to clipboard</button></div>
+      </div>`;
+      c.innerHTML = h; return;
+    }
+
+    if (state.view === 'games') {
+      if (!state.activePlayerId) { c.innerHTML = `<div class="rpb-empty">Select a player first.</div>`; return; }
+      if (state.gameForm) { c.innerHTML = renderGameForm(); return; }
+      const p = state.players[state.activePlayerId];
+      const gms = Object.values(state.games).filter(g=>g.playerId===state.activePlayerId).sort((a,b)=>b.date.localeCompare(a.date));
+      const s = seasonStats(state.activePlayerId);
+
+      let h = `<div class="rpb-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:8px;flex-wrap:wrap;">
+          <div><h2 style="margin:0;font-size:17px;font-weight:500;">${p.name||'Player'} — game log</h2><p style="font-size:13px;color:var(--color-text-secondary);margin:2px 0 0;">${gms.length} game${gms.length===1?'':'s'} logged</p></div>
+          <button onclick="rpbNewGame()" class="btn-primary">+ Log a game</button>
+        </div>`;
+
+      if (s.pitching.games>0 || s.hitting.games>0 || s.fielding.chances>0) {
+        h += `<div class="rpb-subsection">Season totals</div>`;
+        if (s.pitching.games>0) h += `<div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;">PITCHING (${s.pitching.games} G)</div><div class="rpb-game-stats"><span><b>${s.pitching.ipDisplay}</b> IP</span><span><b>${s.pitching.era}</b> ERA</span><span><b>${s.pitching.whip}</b> WHIP</span><span><b>${s.pitching.baa}</b> BAA</span><span><b>${s.pitching.so}</b> K</span><span><b>${s.pitching.bb}</b> BB</span><span><b>${s.pitching.kbb}</b> K/BB</span></div></div>`;
+        if (s.hitting.games>0) h += `<div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;">HITTING (${s.hitting.games} G)</div><div class="rpb-game-stats"><span><b>${s.hitting.avg}</b> AVG</span><span><b>${s.hitting.obp}</b> OBP</span><span><b>${s.hitting.slg}</b> SLG</span><span><b>${s.hitting.ops}</b> OPS</span><span><b>${s.hitting.h}</b>-for-<b>${s.hitting.ab}</b></span><span><b>${s.hitting.rbi}</b> RBI</span>${s.hitting.rab>0?`<span><b>${s.hitting.baRisp}</b> BA/RISP</span>`:''}</div></div>`;
+        if (s.fielding.chances>0) h += `<div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:8px;"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;">FIELDING</div><div class="rpb-game-stats"><span><b>${s.fielding.po}</b> PO</span><span><b>${s.fielding.a}</b> A</span><span><b>${s.fielding.e}</b> E</span><span><b>${s.fielding.fpct}</b> FLD%</span></div></div>`;
+      }
+
+      h += `<div class="rpb-subsection" style="margin-top:16px;">Game log</div>`;
+      if (gms.length === 0) h += `<div class="rpb-empty">No games yet. Click "+ Log a game" to enter numbers from your GameChanger screenshot.</div>`;
+      else gms.forEach(g => {
+        const hP = g.pitching && g.pitching.ip;
+        const hH = g.hitting && g.hitting.ab;
+        const hF = g.fielding && (g.fielding.po||g.fielding.a||g.fielding.e);
+        let sum = [];
+        if (hP) sum.push(`<span><span class="rpb-badge p">P</span>${g.pitching.ip} IP, ${g.pitching.so||0} K, ${g.pitching.bb||0} BB, ${g.pitching.er||0} ER${g.pitching.sv>0?', SV':''}${g.pitching.w>0?', W':''}${g.pitching.l>0?', L':''}</span>`);
+        if (hH) sum.push(`<span><span class="rpb-badge h">H</span>${g.hitting.h||0}-for-${g.hitting.ab}${g.hitting.rbi?', '+g.hitting.rbi+' RBI':''}${g.hitting.hr?', HR':''}</span>`);
+        if (hF) sum.push(`<span><span class="rpb-badge f">F</span>${g.fielding.po||0} PO, ${g.fielding.a||0} A${g.fielding.e?', '+g.fielding.e+' E':''}</span>`);
+        h += `<div class="rpb-game-row"><div style="display:flex;justify-content:space-between;align-items:start;gap:8px;flex-wrap:wrap;"><div style="flex:1;min-width:200px;"><div style="font-weight:500;">${g.date} · vs ${g.opponent}${g.result?' · '+g.result:''} ${g.highlight?'<span class="rpb-badge star">★ highlight</span>':''}</div><div class="rpb-game-stats">${sum.join('')||'<span style="color:var(--color-text-tertiary);">No stats</span>'}</div>${g.notes?`<div style="font-size:12px;color:var(--color-text-secondary);margin-top:6px;font-style:italic;">${g.notes}</div>`:''}</div><div class="rpb-inline-btns"><button onclick="rpbStar('${g.id}')">${g.highlight?'☆':'★'}</button><button onclick="rpbEditGame('${g.id}')">Edit</button><button onclick="rpbDelGame('${g.id}')" class="btn-danger">Del</button></div></div></div>`;
+      });
+      h += '</div>';
+      c.innerHTML = h; return;
+    }
+
+    if (state.view === 'colleges') {
+      const f = state.collegeFilter;
+      const fl = state.colleges.filter(cc => (!f.division||cc.division===f.division) && (!f.state||cc.state===f.state) && (!f.search||cc.name.toLowerCase().includes(f.search.toLowerCase())));
+      const sts = [...new Set(state.colleges.map(cc=>cc.state))].sort();
+      let h = `<div class="rpb-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h2 style="margin:0;font-size:17px;font-weight:500;">College database</h2><button onclick="rpbAddCollege()">+ Add</button></div>
+        <div class="rpb-filter-row">
+          <select onchange="rpbFilter('division',this.value)"><option value="">All divisions</option>${['JUCO','NAIA','D1','D2','D3'].map(d=>`<option ${f.division===d?'selected':''}>${d}</option>`).join('')}</select>
+          <select onchange="rpbFilter('state',this.value)"><option value="">All states</option>${sts.map(ss=>`<option ${f.state===ss?'selected':''}>${ss}</option>`).join('')}</select>
+          <input placeholder="Search..." value="${f.search}" oninput="rpbFilter('search',this.value)">
+        </div>
+        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px;">${fl.length} school${fl.length===1?'':'s'}</div>`;
+      fl.forEach(cc => {
+        const tr = state.activePlayerId && state.contacts[state.activePlayerId+'_'+cc.id];
+        h += `<div class="rpb-row"><div><div style="font-weight:500;">${cc.name}</div><div style="font-size:13px;color:var(--color-text-secondary);margin-top:2px;"><span class="rpb-badge ${cc.division.toLowerCase()}">${cc.division}</span>${cc.state} · Min GPA ${cc.gpaMin}${cc.notes?' · '+cc.notes:''}</div></div><div>${tr?'<span style="font-size:12px;color:var(--color-text-success);">Tracked</span>':`<button onclick="rpbTrack('${cc.id}')">+ Track</button>`}</div></div>`;
+      });
+      h += '</div>';
+      c.innerHTML = h; return;
+    }
+
+    if (state.view === 'tracker') {
+      if (!state.activePlayerId) { c.innerHTML = `<div class="rpb-empty">Select a player first.</div>`; return; }
+      const p = state.players[state.activePlayerId];
+      const pc = Object.entries(state.contacts).filter(([k,v])=>v.playerId===state.activePlayerId);
+      const tot = pc.length;
+      const snt = pc.filter(([k,v])=>v.status==='sent').length;
+      const rpl = pc.filter(([k,v])=>v.status==='replied').length;
+      const pnd = pc.filter(([k,v])=>v.status==='pending').length;
+      const nf1 = pc.filter(([k,v])=>v.status==='sent'&&v.sentDate&&!v.followup1Date&&daysSince(v.sentDate)>=7);
+      const nf2 = pc.filter(([k,v])=>v.status==='sent'&&v.followup1Date&&!v.followup2Date&&daysSince(v.followup1Date)>=10);
+
+      let h = `<div class="rpb-card">
+        <h2 style="margin:0 0 1rem;font-size:17px;font-weight:500;">${p.name||'Player'} — contact tracker</h2>
+        <div class="rpb-grid3" style="margin-bottom:1rem;">
+          <div class="rpb-metric"><div class="rpb-metric-label">Tracked</div><div class="rpb-metric-value">${tot}</div></div>
+          <div class="rpb-metric"><div class="rpb-metric-label">Sent</div><div class="rpb-metric-value">${snt}</div></div>
+          <div class="rpb-metric"><div class="rpb-metric-label">Replies</div><div class="rpb-metric-value">${rpl}</div></div>
+          <div class="rpb-metric"><div class="rpb-metric-label">Pending</div><div class="rpb-metric-value">${pnd}</div></div>
+        </div>`;
+      if (nf1.length||nf2.length) h += `<div style="background:var(--color-background-warning);padding:10px 12px;border-radius:var(--border-radius-md);margin-bottom:12px;font-size:13px;color:var(--color-text-warning);">${nf1.length?nf1.length+' due for follow-up #1. ':''}${nf2.length?nf2.length+' due for follow-up #2.':''}</div>`;
+      if (pc.length === 0) h += `<div class="rpb-empty">No schools tracked.</div>`;
+      else pc.forEach(([k,v]) => {
+        const cg = state.colleges.find(cc=>cc.id===v.collegeId); if (!cg) return;
+        const d = daysSince(v.sentDate);
+        let sc = v.status;
+        if (v.status==='sent' && d!==null && d>=14 && !v.followup1Date) sc = 'overdue';
+        h += `<div class="rpb-card" style="margin-bottom:8px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;"><div><div style="font-weight:500;">${cg.name}</div><div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;"><span class="rpb-badge ${cg.division.toLowerCase()}">${cg.division}</span>${cg.state}</div></div><span class="rpb-status ${sc}">${sc==='overdue'?'Follow up now':v.status}</span></div>
+          <div class="rpb-grid2">
+            <div class="rpb-field"><label>Coach email</label><input value="${v.coachEmail}" oninput="rpbUpdContact('${k}','coachEmail',this.value)"></div>
+            <div class="rpb-field"><label>Sent</label><input type="date" value="${v.sentDate||''}" oninput="rpbUpdContact('${k}','sentDate',this.value)"></div>
+            <div class="rpb-field"><label>Follow-up #1</label><input type="date" value="${v.followup1Date||''}" oninput="rpbUpdContact('${k}','followup1Date',this.value)"></div>
+            <div class="rpb-field"><label>Follow-up #2</label><input type="date" value="${v.followup2Date||''}" oninput="rpbUpdContact('${k}','followup2Date',this.value)"></div>
+          </div>
+          <div class="rpb-field"><label>Notes</label><textarea rows="2" oninput="rpbUpdContact('${k}','notes',this.value)">${v.notes}</textarea></div>
+          <div class="rpb-inline-btns" style="margin-top:8px;">${v.status==='pending'?`<button onclick="rpbSent('${k}')">Mark sent</button>`:''}${v.status==='sent'?`<button onclick="rpbReplied('${k}')">Mark replied</button>`:''}<button onclick="rpbRmContact('${k}')" class="btn-danger">Remove</button></div>
+        </div>`;
+      });
+      h += '</div>';
+      c.innerHTML = h; return;
+    }
+
+    if (state.view === 'todo') {
+      if (!state.activePlayerId) { c.innerHTML = `<div class="rpb-empty">Select a player first.</div>`; return; }
+      const p = state.players[state.activePlayerId];
+      ensureTodos(state.activePlayerId);
+      const td = state.todos[state.activePlayerId];
+      const tot = Object.values(TODO_TEMPLATE).flat().length;
+      const dn = Object.values(td).filter(Boolean).length;
+      const pct = tot>0 ? Math.round(dn/tot*100) : 0;
+      let h = `<div class="rpb-card">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;gap:8px;flex-wrap:wrap;"><div><h2 style="margin:0;font-size:17px;font-weight:500;">${p.name||'Player'} — to-do list</h2><p style="font-size:13px;color:var(--color-text-secondary);margin:4px 0 0;">${dn} of ${tot} complete · ${pct}%</p></div><button onclick="rpbResetTodos()" style="font-size:12px;">Reset all</button></div>
+        <div class="rpb-progress-bar"><div class="rpb-progress-fill" style="width:${pct}%;"></div></div>
+      </div>`;
+      Object.entries(TODO_TEMPLATE).forEach(([cat, items]) => {
+        const cd = items.filter(i=>td[i.id]).length;
+        h += `<div class="rpb-card"><div class="rpb-category-header"><span>${cat}</span><span style="font-size:12px;color:var(--color-text-secondary);font-weight:400;">${cd} / ${items.length}</span></div>`;
+        items.forEach(i => {
+          const d = !!td[i.id];
+          h += `<div class="rpb-todo-item"><input type="checkbox" class="rpb-todo-check" ${d?'checked':''} onchange="rpbTodo('${i.id}')"><div style="flex:1;"><div class="rpb-todo-title ${d?'done':''}">${i.title}</div><div class="rpb-todo-detail">${i.detail}</div></div></div>`;
+        });
+        h += '</div>';
+      });
+      c.innerHTML = h; return;
+    }
+  }
+
+  loadState();
+})();
+</script>
+
+</body>
+</html>
